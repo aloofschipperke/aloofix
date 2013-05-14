@@ -1,0 +1,44 @@
+#!/bin/ash
+###############################################################################
+# Script to create and populate hard drive filesystems for Aloofix.
+# Copyright (C) 2008-2010, 2013  Kevin Johnson <aloof.schipperke@gmail.com>
+#
+# This file is part of Aloofix.
+# Aloofix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Aloofix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###############################################################################
+
+[ "$hd_dev" ] || die "Do not run $0 directly."
+
+[ $(expr index "$rootdev" ' ') -eq 0 ] \
+    || die "can't create boot filesystem on multiple partitions: $rootdev"
+
+for device in $bootdev
+do
+    echo "--> $bootfstype on $device" >&2
+    "/sbin/mkfs.$bootfstype" -q -L BOOT "$device"
+done
+
+for device in $swapdev
+do
+    echo "--> swap on $device" >&2
+    /sbin/mkswap -L SWAP "$device"
+done
+
+echo "--> $fstype on $rootdev" >&2
+"/sbin/mkfs.$fstype" -q -L ROOT "$rootdev"
+
+echo "--> mounting filesystems" >&2
+/bin/mount -t "$fstype" "$rootdev" "$root_mount"
+/bin/mkdir "$boot_mount"
+/bin/mount -t "$bootfstype" "$bootdev" "$boot_mount"

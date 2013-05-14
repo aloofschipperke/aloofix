@@ -1,0 +1,92 @@
+#!/bin/ash
+###############################################################################
+# udhcpc trigger script for Aloofix.
+# Copyright (C) 2008-2010,2013  Kevin Johnson <aloof.schipperke@gmail.com>
+#
+# This file is part of Aloofix.
+# Aloofix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Aloofix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###############################################################################
+
+# $interface, $ip, $subnet, $broadcast, $router, $domain, $dns
+
+resolv_conf="/etc/resolv.conf"
+default_interface=eth0
+
+if [ $# -ne 1 ]
+then
+    echo "Usage: $0 command" 2>&1
+    exit 2
+fi
+
+cmd=$1
+
+case "$cmd" in
+    bound|renew)
+	[ "$broadcast" ] && broadcast="broadcast $broadcast"
+	[ "$subnet" ] && netmask="netmask $subnet"
+
+	/sbin/ifconfig $interface $ip $broadcast $netmask
+
+	if [ "$router" ]
+	then
+	    gw_list=`/sbin/ip route \
+		| /usr/bin/awk "/^default via .* dev $interface /  {print \$3}"`
+	    for gw in $gw_list
+	    do
+		/sbin/route del default gw $gw dev $interface
+	    done
+
+	    metric=0
+	    for gw in $router
+	    do
+		/sbin/route add default gw $gw dev $interface metric $metric
+		metric=$(($metric + 1))
+	    done
+	fi
+
+	# naive logic for selecting which interface rewrites resolv.conf
+	if [ "$interface" = "$default_interface" ]
+	then
+	    new_resolv_conf="$resolv_conf.$$"
+	    >$new_resolv_conf
+	    /bin/chmod 644 $new_resolv_conf
+	    [ ! -f /etc/resolv.conf.head ] \
+		|| cat /etc/resolv.conf.head >>$new_resolv_conf
+
+	    [ "$domain" ] && echo "search $domain" >>$new_resolv_conf
+	    for nameserver in $dns
+	    do
+		echo "nameserver $nameserver" >>$new_resolv_conf
+	    done
+
+	    [ ! -f /etc/resolv.conf.tail ] \
+		|| cat /etc/resolv.conf.tail >>$new_resolv_conf
+	    /bin/mv $new_resolv_conf $resolv_conf
+	fi
+	;;
+    deconfig)
+	/sbin/ifconfig $interface 0.0.0.0
+	;;
+    leasefail)
+	echo "dhcp lease failed"
+	;;
+    nak)
+	echo "received dhcp nak"
+	;;
+    *)
+	# echo udhcpc $0: unknown command: $cmd
+	;;
+esac
+
+exit 0

@@ -1,0 +1,49 @@
+#!/bin/sh
+
+# This file is part of the Aloofix project.
+# Copyright (C) 2013 Kevin Johnson <kjj@aloofschipperke.com>
+# Distributed under the terms of the GNU General Public License version 3,
+# or (at your option) any later version.
+
+if [ "$(id -un)" != root ]
+then
+    echo  "must be root to run $0" >&2
+    exit 1
+fi
+
+exec 9>"/var/spool/cron/.lock"
+if ! /usr/bin/flock -n 9
+then
+    /usr/bin/logger -t crond another instance of run-crons is running
+    exit 3
+fi
+
+lastrun_dir=/var/spool/cron/lastrun
+[ -d $lastrun_dir ] || /bin/mkdir $lastrun_dir
+
+for period in hourly daily weekly monthly
+do
+    [ -d "/etc/cron.$period" ] || continue
+    trigger=y
+    if [ -e "$lastrun_dir/cron.$period" ]
+    then
+	lastmod=$(stat -c %Y $lastrun_dir/cron.$period)
+	now=$(date +%s)
+	case $period in
+	    hourly)	duration=3900	 ;; # 1 hour + 5 minutes
+	    daily)	duration=86700	 ;; # 1 day + 5 minutes
+	    weekly)	duration=605100	 ;; # 1 week + 5 minutes
+	    monthly)	duration=2678700 ;; # 1 month + 5 minutes
+	esac
+	age=$(($now - $lastmod))
+	[ "$age" -ge "$duration" ] || trigger=
+    fi
+    if [ "$trigger" ]
+    then
+	touch "$lastrun_dir/cron.$period"
+	logger -p cron.info -t run-crons /etc/cron.$period
+	/bin/run-parts /etc/cron.$period
+    fi
+done    
+
+exit 0

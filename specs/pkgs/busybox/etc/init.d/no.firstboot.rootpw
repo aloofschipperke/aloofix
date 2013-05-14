@@ -1,0 +1,18 @@
+#!/bin/ash
+
+if [ $# != 0 ]
+then
+    echo "Usage: $0" >&2
+    exit 1
+fi
+
+echo "Randomizing root password"
+
+long_random_pw=$(dd if=/dev/urandom count=1 bs=100 | tr -c ' -~')
+
+if [ -n "$long_random_pw" ]
+then
+    echo "root:$long_random_pw" | chpasswd --md5
+fi
+
+exit 0

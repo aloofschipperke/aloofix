@@ -1,0 +1,72 @@
+#!/bin/sh
+###############################################################################
+# Script to configure lvm2 for the root filesystem on Aloofix.
+# Copyright (C) 2011, 2013  Kevin Johnson <aloof.schipperke@gmail.com>
+#
+# This file is part of Aloofix.
+# Aloofix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Aloofix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###############################################################################
+
+[ -x /usr/sbin/lvm ] || die "lvm not installed on this iso image"
+[ "$hd_dev" ] || die "Do not run $0 directly."
+
+###############################################################################
+# echo initializing lvm
+###############################################################################
+
+depmod
+modprobe dm-mod
+dmsetup mknodes
+lvm vgscan --ignorelockingfailure
+lvm vgchange -a y --ignorelockingfailure
+
+vg0_exists=$(lvm vgs --noheading --options vg_name --separator ':' \
+    | grep -c ' vg0$') || :
+[ $vg0_exists -eq 0 ] || {
+    [ "$force_vg0" ] || die "vg0 already exists"
+    lvm vgremove vg0
+}
+
+###############################################################################
+# echo setting lvm partition type
+###############################################################################
+
+for device in $hd_dev
+do
+    printf "t\n%d\n%s
+w
+"   3 8e \
+    | fdisk $device || :
+    # Workaround: fdisk can fail here if mdadm is active, but it still
+    # sets the partition type. We ignore the exit status from fdisk
+    # and check the partition type to determine success.
+
+    part3type=$(fdisk -l $device | grep "^${device}3" | awk '{print $5}')
+    [ "$part3type" = '8e' ] \
+	|| die "Setting LVM partition type on $device failed"
+done
+
+###############################################################################
+# echo creating lvm volumes
+###############################################################################
+
+for device in $rootdev
+do
+    lvm pvcreate $device
+done
+
+lvm vgcreate vg0 $rootdev
+lvm lvcreate --extents 100%PVS --name root vg0
+
+rootdev=/dev/vg0/root

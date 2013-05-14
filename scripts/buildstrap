@@ -1,0 +1,54 @@
+#!/bin/sh
+
+# This file is part of the Aloofix project.
+# Copyright (C) 2013 Kevin Johnson <aloof.schipperke@gmail.com>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or (at
+# your option) any later version.
+
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see http://www.gnu.org/licenses/.
+
+# This is a convenience script for building an Aloofix installation
+# CD. If successful, it will deposit an ISO image in the images
+# subdirectory.
+
+set -e
+set -u
+
+pkglist="syslinux linux glibc tzdata busybox opkg e2fsprogs zlib dropbear make patch binutils gcc tar fakeroot aloofix-src"
+
+user=$(id -un)
+[ "$user" != root ] || die "do not run $0 as root"
+
+starttime=$(date)
+
+if [ -f /etc/aloofix-release ]
+then
+    echo "Building and installing prequisite packages"
+    buildpkgs=$(echo $(./scripts/list-pkg-dependencies --builddepends $pkglist))
+    echo "[root required]"
+    su -c "./scripts/magic-install $buildpkgs cdrtools-mkisofs"
+fi
+
+for P in user aloofix-src install2hd
+do
+    echo Building $P package
+    ./scripts/build-pkg --quiet --force $P
+done
+echo Creating iso_initrd
+./scripts/mkimage iso_initrd
+echo Creating aloofix-buildstrap
+./scripts/mkimage aloofix-buildstrap
+
+echo Started: $starttime
+echo Finished: $(date)
+
+###############################################################################

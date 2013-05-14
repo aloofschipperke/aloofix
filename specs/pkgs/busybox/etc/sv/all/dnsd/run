@@ -1,0 +1,27 @@
+#!/bin/ash
+
+exec 2>&1
+
+sv up syslogd
+
+[ -f /etc/sysconfig/dnsd ] && . /etc/sysconfig/dnsd
+
+if [ ! -r /etc/dnsd.conf ]
+then
+    logger -t dnsd "/etc/dnsd.conf not found - downing service"
+    sv down .
+    exit 1
+fi
+
+port=
+addr=
+ttl=
+onlysuccesses=
+
+args=
+[ "$port" ] && args="-p $port $args"
+[ "$addr" ] && args="-i $addr $args"
+[ "$ttl" ] && args="-t $ttl $args"
+[ "$onlysuccesses" ] && args="-s $args"
+
+exec /usr/sbin/dnsd -c /etc/dnsd.conf -v $args

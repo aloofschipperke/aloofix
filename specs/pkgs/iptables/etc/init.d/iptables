@@ -1,0 +1,82 @@
+#!/bin/sh
+
+die() { echo "$@" >&2; exit 1; }
+
+[ -f /etc/sysconfig/iptables ] && . /etc/sysconfig/iptables
+
+case "$1" in
+start)
+	# we don't apply iptables to bridges
+	if [ -d /proc/sys/net/bridge ]
+	then
+	    echo 0 >/proc/sys/net/bridge/bridge-nf-call-arptables
+	    echo 0 >/proc/sys/net/bridge/bridge-nf-call-iptables
+	    echo 0 >/proc/sys/net/bridge/bridge-nf-call-ip6tables
+	    echo 0 >/proc/sys/net/bridge/bridge-nf-filter-vlan-tagged
+	fi
+	iptables --table filter --flush
+	iptables --table mangle --flush
+	iptables --table nat --flush
+	ip6tables --flush INPUT
+	ip6tables --flush FORWARD
+	ip6tables --flush OUTPUT
+
+	iptables --policy INPUT DROP
+	iptables --policy FORWARD DROP
+	iptables --policy OUTPUT ACCEPT
+	ip6tables --policy INPUT DROP
+	ip6tables --policy FORWARD DROP
+	ip6tables --policy OUTPUT ACCEPT
+
+	[ -x /etc/iptables/start ] && /etc/iptables/start
+
+	iptables -A INPUT -p tcp -j REJECT --reject-with tcp-reset
+	iptables -A INPUT -p udp -j REJECT --reject-with icmp-port-unreachable
+	iptables -A INPUT -j REJECT --reject-with icmp-proto-unreachable
+	iptables -A INPUT -j REJECT
+	iptables -A FORWARD -j REJECT
+	ip6tables -A INPUT -j REJECT --reject-with icmp6-port-unreachable
+	ip6tables -A FORWARD -j REJECT --reject-with icmp6-port-unreachable
+	;;
+stop)
+	if [ -f /proc/net/ip_tables_names ]
+	then
+	    for table in `cat /proc/net/ip_tables_names`
+	    do
+		iptables -F -t $table
+		iptables -X -t $table
+
+		case "$table" in
+		    nat)
+			iptables -t nat -P PREROUTING ACCEPT
+			iptables -t nat -P POSTROUTING ACCEPT
+			iptables -t nat -P OUTPUT ACCEPT
+			;;
+		    mangle)
+			iptables -t mangle -P PREROUTING ACCEPT
+			iptables -t mangle -P INPUT ACCEPT
+			iptables -t mangle -P FORWARD ACCEPT
+			iptables -t mangle -P OUTPUT ACCEPT
+			iptables -t mangle -P POSTROUTING ACCEPT
+			;;
+		    filter)
+			iptables -t filter -P INPUT ACCEPT
+			iptables -t filter -P FORWARD ACCEPT
+			iptables -t filter -P OUTPUT ACCEPT
+			;;
+		esac
+	    done
+	fi
+	ip6tables -F -t filter
+	ip6tables -X -t filter
+	ip6tables -t filter -P INPUT ACCEPT
+	ip6tables -t filter -P FORWARD ACCEPT
+	ip6tables -t filter -P OUTPUT ACCEPT
+	;;
+*)
+	echo "Usage: $0 {start,stop}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

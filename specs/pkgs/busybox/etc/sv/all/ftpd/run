@@ -1,0 +1,19 @@
+#!/bin/ash
+
+exec 2>&1
+exec </dev/null
+
+timeout=10
+max_same_ip=5
+ftpdir=/srv/anonftp
+
+sv up syslogd
+
+[ -f /etc/sysconfig/ftpd ] && . /etc/sysconfig/ftpd
+
+[ -d "$ftpdir" ] || mkdir -p "$ftpdir"
+
+exec env - PATH="$PATH" \
+    /usr/bin/softlimit \
+    /usr/bin/tcpsvd -vE -l 0 -c $max_same_ip 0.0.0.0 21 \
+    /usr/sbin/ftpd -t$timeout -vv "$ftpdir"

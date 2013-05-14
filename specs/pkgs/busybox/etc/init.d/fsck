@@ -1,0 +1,34 @@
+#!/bin/ash
+
+case "$1" in
+    start)
+	if [ ! -f /fastboot ]
+	then
+	    fsck_options=
+
+	    if [ -f /forcefsck ]
+	    then
+		echo "Forcing fsck due to /forcefsck"
+		fsck_options="-f"
+	    fi
+
+	    /sbin/fsck -T $fsck_options
+
+	    if [ $? -gt 1 ]
+	    then
+		echo "Fsck failure - repair manually."
+		echo "Control-D will exit the maintenance shell and reboot."
+		/sbin/sulogin -t 15 /dev/console
+		/sbin/reboot -f
+	    fi
+	else
+	    echo "Skipping fsck due to /fastboot"
+	fi
+	;;
+    *)
+	echo "Usage: $0 {start}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

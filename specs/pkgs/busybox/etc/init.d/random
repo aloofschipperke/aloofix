@@ -1,0 +1,23 @@
+#!/bin/ash
+
+seed_file=/var/tmp/random-seed
+
+case "$1" in
+    start)
+	[ -f $seed_file ] && cat $seed_file >/dev/urandom
+	;;
+    stop)
+	;;
+    *)
+	echo "Usage: $0 {start|stop}" >&2
+	exit 1
+	;;
+esac
+
+if ! /bin/dd if=/dev/urandom of=$seed_file count=1 2>/dev/null
+then
+	echo "Error saving random seed" >&2
+	exit 1
+fi
+
+exit 0

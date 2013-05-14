@@ -1,0 +1,15 @@
+#!/bin/ash
+
+rate=0
+queue=128
+
+if [ ! -r /etc/inetd.conf ]
+then
+    logger -t inetd "/etc/inetd.conf not found - downing service"
+    sv down .
+    exit 1
+fi
+
+[ -f /etc/sysconfig/inetd ] && . /etc/sysconfig/inetd
+
+exec /usr/sbin/inetd -f -q $queue -R $rate

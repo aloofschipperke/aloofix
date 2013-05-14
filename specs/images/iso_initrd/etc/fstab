@@ -1,0 +1,3 @@
+none		/proc		proc	defaults	0 0
+none		/sys		sysfs	defaults	0 0
+/dev/cdrom	/mnt/cdrom	iso9660	ro		0 0

@@ -1,0 +1,18 @@
+#!/bin/ash
+
+# env: IFPLUGD_PREVIOUS, IFPLUGD_CURRENT
+# script-name $iface $action $extra_arg
+# action: up, down
+
+iface="$1"
+action="$2"
+extra_arg="$3"
+
+[ -f /etc/sysconfig/ifplugd ] && . /etc/sysconfig/ifplugd
+
+script="/etc/ifplugd/ifplugd.$iface"
+[ -x "$script" ] && exec "$script" "$@"
+
+logger -t "ifplugd.action[$$]" "no suitable handler for $iface"
+
+exit 1

@@ -1,0 +1,8 @@
+LABEL=ROOT	/		ext4	defaults		0 1
+LABEL=SWAP	swap		swap	defaults		0 0
+LABEL=BOOT	/boot		ext2	defaults		0 2
+none		/proc		proc	defaults		0 0
+none		/sys		sysfs	defaults		0 0
+none		/dev/shm	tmpfs	size=128m,rw,noexec,nosuid,nodev,noauto 0 0
+tmpfs		/tmp		tmpfs	nodev,nosuid		0 0
+/dev/cdrom	/mnt/cdrom	iso9660	noauto			0 0

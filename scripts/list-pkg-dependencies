@@ -1,0 +1,123 @@
+#!/bin/sh
+
+# This file is part of the Aloofix project.
+# Copyright (C) 2013 Kevin Johnson <aloof.schipperke@gmail.com>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or (at
+# your option) any later version.
+
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see http://www.gnu.org/licenses/.
+
+set -e
+# set -u
+
+top=$(pwd)
+. "$top/config.sh"
+
+die() { echo "$*" >/dev/tty; exit 1; }
+get_pkg_var() { eval "echo \${${1}_${2}-}"; }
+usage() {
+    echo "usage: $0 [--builddepends] [--depends] [--withargs] \$pkgname+" >&2
+    exit 2
+}
+
+args=$(getopt -l help,withargs,builddepends,depends '' "$@")
+[ $? -eq 0 ] || usage
+
+flavor=depends
+withargs=
+
+eval set -- "$args"
+for arg
+do
+    case "$arg" in
+	--builddepends)
+	    flavor=builddepends
+	    shift ;;
+	--depends)
+	    flavor=depends
+	    shift ;;
+	--withargs)
+	    withargs=yes
+	    shift ;;
+	--help)
+	    usage ;;
+	--)
+	    shift
+	    break ;;
+    esac
+done
+
+[ $# -gt 0 ] || usage
+
+split_pkg_name() {
+    local package="$1"
+    local parent
+    local subpkg
+    if [ -f "$spectree/$package/spec.sh" ]
+    then
+	echo "$package"
+    else
+	parent="${package%-[a-z0-9]*}"
+	subpkg="${package##*-}"
+	[ -f "$spectree/$parent/spec.sh" ] || return 1
+	echo "$parent $subpkg"
+    fi
+}
+
+get_dependencies() {
+    local fullpkgname="$1"
+    local package
+    local subpkg
+    local dependencies
+    local subdeps
+
+    eval "$flavor="
+
+    read package subpkg <<EOF
+$(split_pkg_name "$fullpkgname")
+EOF
+    [ "$package" ] || die "unknown package: $fullpkgname"
+    [ "$subpkg" ] || subpkg=base
+
+    . "$spectree/$package/spec.sh"
+    eval "base_$flavor=\"\$$flavor\""
+
+    if [ "$flavor" = "builddepends" ]
+    then
+	dependencies="$(get_pkg_var base builddepends)"
+    else
+	dependencies="$(get_pkg_var "$subpkg" "$flavor")"
+    fi
+    if [ "$dependencies" ]
+    then
+	subdeps="$($0 --$flavor $dependencies)"
+	if [ "$subdeps" ]
+	then
+	    dependencies="$subdeps
+$dependencies"
+	fi
+    fi
+    [ -z "$dependencies" ] || echo "$dependencies"
+}
+
+###############################################################################
+
+remove_dups() { sed -e 's/ /\n/g' | awk '!x[$0]++'; }
+
+for pkg in "$@"
+do
+    deps="$(get_dependencies "$pkg")"
+    [ -z "$deps" ] || echo $deps
+    [ -z "$withargs" ] || echo "$pkg"
+done | remove_dups
+
+###############################################################################

@@ -1,0 +1,18 @@
+# This file is part of the Aloofix project.
+# Copyright (C) 2013 Kevin Johnson <kjj@aloofschipperke.com>
+# Distributed under the terms of the GNU General Public License version 3,
+# or (at your option) any later version.
+
+name=
+version=
+sequence=1
+description=
+site=
+depends=
+builddepends=
+section=
+
+license=
+license_files=
+
+extra_doc_files=

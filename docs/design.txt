@@ -1,0 +1,272 @@
+Design Concepts
+===============
+
+This file is part of the Aloofix Project.  You can redistribute the
+file and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation; either version 3
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see http://www.gnu.org/licenses/.
+
+Introduction
+------------
+
+Aloofix is designed with a specific set of design concepts.
+
+* Minimalist
+
+    Aloofix attempts to reduce the overall footprint of the installed
+    operating system and support utilities. While some people say that
+    disk space is inexpensive, there are other impacts on using more
+    space in a distribution - security, migration, maintenance, and
+    deployment are impacted.
+
+    The base distribution consists of: syslinux, linux, glibc,
+    busybox, zlib, and dropbear. This provides a fairly full featured
+    Linux distribution, while allowing other packages to be added.
+
+* Rolling release model
+
+    Well, sort of. Actually, Aloofix is designed to deployed as a
+    rolling release or a periodic release train. The primary source
+    code for Aloofix is updated to include the latest software
+    versions. In theory, loading from the git repository and
+    rebuilding any updated packages will provide a rolling
+    release. This is the primary model used by the primary Aloofix
+    developer. You can also stick with a particular version of the
+    Aloofix build kit source code and maintain your own
+    release. Unlike Gentoo, which provides ebuilds for multiple
+    versions, the `spec.sh` in Aloofix is intended for one specific
+    version of a software package. One of the primary goals for
+    Aloofix was to provide an environment where a user can run the
+    latest versions of software packages, incrementally upgrading each
+    package as new versions are released.
+
+* Intended for virtual environments
+
+    While minimal, Aloofix is not intended to replace distributions
+    designed for Wifi access points and similar embedded devices. It
+    uses some of the same design principles, but is fundamentally
+    intended to be used in virtual environents. Aloofix is designed to
+    be usable as a VM guest either on a personal workstation or in a
+    datacenter.
+
+Use Cases
+---------
+
+### A single purpose VM
+
+Every moving part is a part that needs to be maintained. A
+single-purpose VM is, by definition, easier to maintain. A DNS server
+based on `dnsmasq` doesn't require any additional packages beyond
+`dnsmasq` and the core packages in Aloofix.
+
+### A testbed for the latest Linux technologies
+
+Since Aloofix uses a rolling release, focusing on running the latest
+versions of software packages, it can be used to evaluate the latest
+technologies. In addition to the latest kernel features, other
+packages such as openvswitch are in the pipeline.
+
+### A minimal text-based developer environment
+
+The primary developer for Aloofix uses the distribution for developing
+Aloofix. The environment includes several packages useful to
+developments: emacs, vim, tmux, bash, git, strace, gdb, perl, python,
+gnupg. Additional packages are in the pipeline.
+
+Design Decisions/Tradeoffs
+--------------------------
+
+There are several key decisions/tradeoffs to understand while working
+with Aloofix.
+
+### Opkg vs. other package managers
+
+Aloofix uses the opkg package manager. Opkg was originally designed to
+be used in embedded devices such as Wifi access points.
+
+
+### Busybox
+
+Aloofix uses busybox as the primary application for providing core
+command-line utilities. It provides a large number of utilities in a
+binary less than 1MB in size. For many situations, busybox provides
+adaquate fnuctionality. Aloofix uses an alternatives mechanism
+provided by `opkg`, so it's possible to use fuller features
+alternatives if necessary. Not all busybox have large alternatives
+currently, but expect more over time.
+
+### Runit service management
+
+Aloofix use the runit commands provided by busybox for managing
+services. Support for services based on init.d scripts is included,
+but the default is to use the runit commands. Aloofix does not have
+support for systemd or any of the other init replacements. The runit
+commands seem like a good match for the minimalist nature of Aloofix
+while still providing some interesting features (such as automatic
+restart of failed services).
+
+### /etc/sysconfig/
+
+The `init.d` and `sv` scripts use the `/etc/sysconfig` for
+configuration settings. These are shell snippets sourced in by the
+scripts and are primarily for settings variables used by the
+script.
+
+For variables that enable or disable features, the variable name
+either has a value or not. A value means the features is enabled, no
+value means the feature is disabled.
+
+Note that not all of the scripts have customization variables.
+
+### /bin/ash
+
+To provide a modest performance improvement on startup, most, if not
+all, of the startup scripts use `/bin/ash` rather than
+`/bin/sh`. Also, some of the callback scripts, such as the
+`default.script` for `udhcpd` also use it.
+
+### Glibc
+
+Glibc was chosen as the standard C library. Early work was done with
+uclibc and other libc variants, but the decision was made to stay with
+glibc. This makes it easier to build packages in Aloofix, not having
+to worrry whether a package will have issues with another libc
+variant. While glibc is a rather large library package, this seemed
+like an appropriate decision. It's possible that eglibc might be
+integrated in the future, as eglibc allows certain features to be
+disabled.
+
+### No(tmuch) internationalization
+
+Apologies to the international community, but the current version of
+Aloofix disables internationalization and Unicode capabilities in
+package builds. This might change in the future. One idea is to split
+out the translation files as separate packages, or add filtering to
+reduce the number of translations built by the build server.
+
+Package Management
+------------------
+
+Aloofix uses opkg for managing packages. It is similar in concept to
+dpkg but provides a smaller footprint.
+
+Note that Aloofix is not designed to accept opkg packages from
+non-Aloofix environments.
+
+Another key aspects of package management in Aloofix is an intentional
+splitting of source packages into smaller installation packages. The
+following describe the more common package types.
+
+* base
+
+    The base packages are typically the packages most people will
+    install. There is no suffix associated with base packages. So the
+    base package for vim will be `vim`. Other subpackages will have a
+    suffix designating the purpose of the subpackage. For example,
+    `vim` documentation for vim. Additional package types are listed
+    and described below.
+
+* lib
+
+    The `*-lib` packages contain the shared libraries used by a
+    package. These are packaged separately to allow them to be
+    included in `*-dev` packages and in cases where the command-line
+    executables in a base package are not needed.
+
+  In some cases, there is no base package. For example, there are no
+  command-line utilities provided with zlib - instead, a `zlib-lib`
+  package is provided containing the shared libraries. This is
+  somewhat different than most Linux distributions, but helps provide
+  a naming convention for package files, helping users know the
+  purpose of a package based on the suffix in the package name.
+
+* dev
+
+    The `*-dev` packages are intended for use when building other
+    packages. These include header files, static libraries (when
+    built), `pkg-config` files, and a dependancy to the correponding
+    `*-lib` package containing shared libraries. Using `*-dev`
+    packages allow developers to install a subset of a package and
+    avoid installation of runtime services and unneeded binary files
+    when compiling.
+
+* doc
+
+    The `*-doc` packages contain manpages, info files, and
+    miscellaneous documentation files from the source code package.
+
+* license
+
+    All packages have a dependancy to the corresponding `*-license`
+    package. This enforces a policy that all packages will have the
+    license files associated with a package.
+
+* min
+
+    Certain packages have a subset of files that provide useful
+    functionality without requiring all of the files associated with a
+    source package. Two excellent examples of this are the `glibc` and
+    `vim` packages. The full packages are rather large, and may be not
+    needed in all situations. The `*-min` packages provide the core
+    functionality without consuming as much disk space. The base
+    package will typically contain a package dependency for the
+    `*-min` package. So, for example, `opkg install vim` will also
+    install `vim-min`.
+
+The Linux kernel packaging is another example of how some packages are
+split to allow subsets to be installed. In addition to the `*-doc`
+type packages for Linux, the kernel modules are split across multiple
+packages. Some examples are listed below:
+
+* linux-acpi
+* linux-crypto
+* linux-evdev
+* linux-firmware
+* linux-md
+* linux-modules
+* linux-netbridge
+* linux-netfilter
+
+This allows a user to include the `linux-acpi` module without needing
+to install every module built for the kernel, and take less time
+downloading and installing the package.
+
+Service Management
+------------------
+
+Aloofix uses the runit facilities provided in Busybox for service
+management. The primary advantage runit provides is the ability to
+restart a service if the service exits. The respawn feature in inittab
+provides a similar feature, but the directory structure in runit makes
+it easier to extend and manage with packages.
+
+In addition to the runit commands provided in busybox, Aloofix
+provides a script to help manage services - `svadmin`. Runit doesn't
+provide runlevels out of the box. The `svadmin` script simplifies the
+management of services, which ones are enabled and disabled, and
+control over runlevels.
+
+Package Alternatives
+--------------------
+
+Busybox provides a notable toolbox of useful utilities. These also
+include several minimal services, such as ntpd, httpd, acpid, and
+tftpd. While useful, there are times when some of the larger
+alternatives are needed. The opkg package manager allows the use of
+alternative for commands and services. As a general rule, Aloofix
+makes a concerted effort to use the minimal versions of commands and
+services. The boot scripts use `/bin/ash`, for example, but `bash` is
+available as a package. Not all of the busybox commands have
+alternatives, but the longer term goal is to integrate alternatives
+for most of the busybox commands. This will allow administrators to
+adjust the level of minimalism to their needs.
+
+# Thanks!

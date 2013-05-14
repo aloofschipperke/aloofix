@@ -1,0 +1,15 @@
+#!/bin/sh
+
+report=/var/log/wtmp.report
+newreport=/var/log/wtmp.report.new
+
+/bin/touch $newreport
+/bin/chmod 640 $newreport
+
+printf "Login accounting for the month ending $(date):\n\n" >>$newreport
+/usr/bin/ac -p | /usr/bin/sort -nr -k2 >>$newreport
+echo >>$newreport
+/usr/bin/last >>$newreport
+/bin/mv $newreport $report
+
+exit 0

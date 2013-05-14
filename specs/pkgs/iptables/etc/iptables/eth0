@@ -1,0 +1,7 @@
+#!/bin/sh
+
+interface="$1"
+
+[ -f /etc/iptables/functions ] && . /etc/iptables/functions
+
+ipv4_tcp_ports_in 23

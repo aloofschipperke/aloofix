@@ -1,0 +1,5 @@
+::sysinit:-/etc/sv/1
+::shutdown:-/etc/sv/3
+::ctrlaltdel:/sbin/reboot
+::restart:/sbin/init
+::respawn:/etc/sv/2

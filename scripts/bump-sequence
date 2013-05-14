@@ -1,0 +1,61 @@
+#!/bin/sh
+
+# This file is part of the Aloofix project.
+# Copyright (C) 2013 Kevin Johnson <aloof.schipperke@gmail.com>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or (at
+# your option) any later version.
+
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see http://www.gnu.org/licenses/.
+
+set -e
+set -u
+
+top=$(pwd)
+. "$top/config.sh"
+
+die() { echo "$*" >&2; exit 1; }
+usage() {
+    echo "usage: $0 \$pkgname+" >&2
+    exit 2
+}
+
+args=$(getopt -l help '' "$@")
+[ $? -eq 0 ] || usage
+
+eval set -- "$args"
+for arg
+do
+    case "$arg" in
+	--help)
+	    usage ;;
+	--)
+	    shift
+	    break ;;
+    esac
+done
+
+[ $# -gt 0 ] || usage
+
+###############################################################################
+
+for pkg in "$@"
+do
+    [ -d "$spectree/$pkg" ] || die "unknown package: $pkg"
+    specfile="$spectree/$pkg/spec.sh"
+    [ -f "$specfile" ] || die "can't find spec file for $pkg"
+    sequence=$(sed -n -e '/^sequence=[0-9]\+$/ s/^.*=//p' $specfile)
+    [ "$sequence" ] || die "can't find sequence number for $pkg"
+    sequence=$(($sequence + 1))
+    sed -i~ -e "s/^sequence=[0-9]\+$/sequence=$sequence/" $specfile
+done
+
+###############################################################################

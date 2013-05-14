@@ -1,0 +1,361 @@
+===============================================================================
+Packaging TODOs:
+
+add blacklist to build-pkg newsigs
+
+add abi checking
+
+add sig tarball checks
+
+add more detail to docs/packaging.txt
+
+add check phase in build-pkg
+    review all packages for builtin test suite
+
+--------
+
+add more packages:
+
+    Packages from previous incarnation:
+	chrony cvs drbd ec2-ami-tools ec2-api-tools ejabberd elinks
+	erlang fcgi gpm grub icu4c ipvsadm keepalived libxslt lighttpd
+	links lxc mercurial (mysql) openjdk qemu screen shorewall
+	shorewall-lite spidermonkey subversion
+
+    Minimal X11 support:
+	bigreqsproto inputproto kbproto libx11 libxau libxcb libxdmcp
+	libxext libxi libxrender libxtst recordproto renderproto
+	xcb-proto xcmiscproto xextproto xproto xtrans
+
+    Some other packages on the maybedo list:
+	apache cronie corosync couchdb cscope doxygen eglibc elfutils
+	grub2 libvirt logrotate lsof ltrace maildrop mlocate monit nfs
+	nullmailer openvswitch otrace parallel parted php pm-utils
+	prof python3 postgresql radvd redis samba sdl systemtap
+
+    and others...
+
+--------
+
+test package upgrades
+     check parms sent to postinst, etc
+
+add package options
+    disable openssl, etc...
+    choice across multiple packages (e.g. "gnutls nss openssl")
+
+invalid subpkg name should cause magic-install and build-pkg to fail
+
+fix error messages from build failures in mkimage
+    make-buildserver --buildall
+
+add ability to automatically strip preinstall files
+    add ability to disable stripping
+    disable if c_optim has debug opts
+
+add 'make [eg]?tags', 'make cscope'
+    needs to be optional
+    run it within build phases or afterwards
+
+combine some of the code in scripts/mkimage and scripts/build-pkg
+
+think about doing a real install of build tools when on an aloofix instance
+      scripts in /usr/bin
+      specs in /usr/src/aloofix-* or /srv/aloofix
+      /srv/aloofix/{build,images,pkgs}
+      where to put config file?
+      update docs to reflect changes
+      following scripts should not be in /usr/bin:
+          make-buildserver
+	  buildstrap
+	  extract-kernel-settings
+	  apply-opkg-hooks (maybe move it into build-pkg)
+
+add --config-cache to configure invocation
+
+write a wizard for creating a spec.sh incrementally
+      convert url into name, version, site, compression_suffix
+      take a stab at possible license(s) and license files
+      populate extra_doc_files
+      extra flags from configure to prepopulate extra_configure_args
+      check for make check or make test
+
+maybe add a layer of indirection for common licenses
+work up better mechanism for multiple license choices and masking
+     enable or disable options based on the options
+
+separate package creation from scripts/build-pkg
+
+add ability to have download mirrors
+
+===============================================================================
+Image TODOs:
+
+ec2:
+	install base tz glibc busybox opkg zlib dropbear e2fsprogs
+		(openssl webuser lighttpd)
+	setup firstboot, hostname, startup daemons, fstab
+	set web index.html, initialize root ssh
+
+convert bootscripts= var in rcS into a file containing boot scripts
+	perhaps /etc/sysconfig/bootscripts
+	maybe do away with S* and K* mechanism and just use bootscript files
+	initrd/etc/init.d/rcS
+	busybox/etc/init.d/rcS
+	lxc/usr/bin/lxc-aloofix
+	lxc/usr/lib/lxc/templates/lxc-aloofix
+
+maybe enable syslogd on installer cd
+
+===============================================================================
+Package TODOs:
+
+improve ipv6 firewall rules
+
+add command-line args to kexec-load
+    --kernel, --initrd, --list ?
+
+enable apparmor in linux kernel
+remove more stuff from linux kernel
+
+add disk linker helper script into /lib/mdev/ (by-label, by-uuid)
+
+maybe have set time with ntpd in the installer script
+
+need to tweak the hwclock stuff - 11-minute mode, etc
+
+maybe replace use of openssl with gnutls in curl
+
+maybe combine sv scripts for busybox acpid and regular acpid
+
+add opkg-keys to opkg
+    or create a second package
+
+have iptables init.d script check for a restore file
+
+improve python2 configure recipe once builddepends is done
+    
+improve syslinux packaging
+
+maybe split gawk into multiple packages
+
+split out libltdl from libtool
+
+specify different license for gnutls libs vs base
+
+maybe add http://www.kernel.org/pub/linux/docs/man-pages/man-pages-posix/man-pages-posix-2003-a.tar.xz
+
+split packages and/or map licenses to subpackages
+    e2fsprogs	GPLv2 lib/{ext2fs,e2p}:LGPLv2 lib/uuid:BSD lib/{et,ss}:MIT
+    libksba	lib:LGPLv3+/GPLv2+ tools:GPLv3+ manual:GPLv3+
+    syslinux	GPLv2+ CC-by-sa-3.0 custom
+    vim		custom docs:(openpub)
+    review doc licenses and reassign license value as needed
+
+split pump out of distcc package and move python dep to distcc-pump
+
+have clocksource be configurable
+
+add suspend to ram and suspend to disk
+
+move user list into separate file
+     pkgspecs/user/users
+     make user package recipe dependent on the user file
+     add home dirs
+     aloofix-src distcc dnsmasq man-db user
+
+create a docs/packages.txt
+       subpackages
+       sv and init.d scripts
+       /etc/sysconfig variables
+       cron entries
+       caveats
+
+improve installer script
+    perhaps use dialog in install2hd
+
+    maybe add mini boot scripts for lvm and mdadm
+
+    lvm and mdadm checks don't get called
+    	because fdisk failed in the partition script if they're active
+		due to partition table already being in use
+
+    clean up the script once lvm and mdadm are fully integrated
+
+    allow choice of putting swap in lvm logical volume
+
+    mdadm
+
+	maybe add support for booting off mdadm raid1 on /boot
+	    syslinux fails to see the boot image (or some such problem)
+	    setting up /boot as raid1 for syslinux:
+	    	    create separate raid1 /boot partition
+		    install mbr on each disk
+		    activate boot raid1 partition
+		    extlinux --raid --install /boot/extlinux
+		    extlinux --clear-once /boot/extlinux
+	add stride option to mkfs when using raid arrays
+	maybe come up with a more generalized event-handler script
+	determine better strategy for configuring raid at install time
+
+improve /sbin/mkinitramfs script
+     add options for handling errors in initramfs
+     	 in /etc/initramfs.conf: failure_mode={ignore,shell,sshd}
+     add support for: resume, disk encryption
+     add documentation for mkinitramfs
+     add -b|--basedir option
+
+sysstat needs cron entries
+	0,15,30,45 * * * *	/usr/lib/sa/sa1 -S DISK 1 1
+	53 23 * * *		/usr/lib/sa/sa2 -A
+need to add S* symlink for sysstat boot script
+
+need to create a var for setting default offboard email address for root mail
+     mdadm uses $mailto
+
+consider splitting e2fsprogs into separate packages
+
+add cron and init.d scripts for cbq
+
+need to add logic for default gateway with multiple interfaces
+     current use of DEFAULT_INTERFACE is too simplistic for many use cases
+     perhaps add route metric mechanism to udhcpc action script
+     	     list of interfaces we'll accept for a default gateway entry
+	     metric offset for each interface (defaults to 1)
+     perhaps implement as a handler script
+implement handler script for selecting which interface owns resolv.conf
+     current default uses DEFAULT_INTERFACE
+     $interface, $domain, $dns
+maybe create resolvconf creation function
+      create_resolv_conf $domain "$dns"
+      resides in /etc/network/rc.functions
+
+split gettext into two package (per PACKAGING file)
+      gettext-runtime
+      gettext-tools (requires gettext-runtime
+
+maybe have group removal remove all members first, then remove group
+      create a opkg-hook function to remove groups and users
+
+create an ncurses-min package
+       shared libraries and subset of terminfo files
+
+===============================================================================
+		
+		init.d	sv	cron	kmods	ping	btest
+		-------	-------	-------	-------	-------	-----
+acct		x	.	x	x	.	-
+acpid		.	x	.	x	i	-
+aloofix-src	.	.	.	.	c	-
+apr		.	.	.	.	l	make check (1F)
+apr-util	.	.	.	.	.	make check (1F)
+attr		.	.	.	.	.	-
+autoconf	.	.	.	.	.	make check (P)
+automake	.	.	.	.	.	make check (2F) [L]
+base		.	.	.	.	c	n/a
+bash		.	.	.	.	c	make test (F bb)
+bdb		.	.	.	.	.	(prereqs)
+binutils	.	.	.	.	c	(prereqs)
+bison		.	.	.	.	c	make check (P)
+bridge-utils	.	.	.	x	.	-
+busybox		x	x	x	x	.	make check (11F)
+bzip2		.	.	.	.	.	make check (P)
+ca-certificates	.	.	.	.	.	-
+ccache		.	.	.	.	.	make check (P)
+cdrtools	.	.	.	.	.	-
+cmake		.	.	.	.	.	make test (1F)
+ctags		.	.	.	.	.	-
+curl		.	.	.	.	.	make check (1F)
+dialog		.	.	.	.	i	-
+diffutils	.	.	.	.	.	make check (1F)
+distcc		.	x	.	.	.	make check (F)
+dmidecode	.	.	.	.	.	-
+dnsmasq		.	x	.	.	.	-
+dropbear	.	x	.	.	.	-
+e2fsprogs	.	.	.	.	.	(prereq)
+emacs		.	.	.	.	i	-
+expat		.	.	.	.	.	make check (P)
+fakeroot	.	.	.	.	c	make check (1F)
+file		.	.	.	.	.	make check (P)
+findutils	.	.	x	.	.	make check (P)
+flex		.	.	.	.	c	make check (2F)
+gawk		.	.	.	.	.	make check (3F)
+gcc		.	.	.	.	c	(prereq)
+gdb		.	.	.	.	i	(prereq)
+gdbm		.	.	.	.	.	make check (P)
+gettext		.	.	.	.	.	make ehck (32F)
+git		.	.	.	.	.	make check (prereqs)
+glib		.	.	.	.	.	make check (F)
+glibc		.	.	.	.	.	make check (prereq)
+gmp		.	.	.	.	l	make check (P)
+gnupg		.	.	.	.	.	make check (P)
+gnutls		.	.	.	.	.	make check (2F 2S)
+gpgme		.	.	.	.	l	-
+groff		.	.	.	.	.	-
+gzip		.	.	.	.	.	(prereq)
+iana-etc	.	.	.	.	.	make test (P)
+install2hd	.	.	.	.	i	n/a
+iproute2	.	.	x	.	.	-
+ipsec-tools	.	.	.	.	.	make check (P)
+iptables	x	.	.	x	.	-
+kexec-tools	.	.	.	.	i	-
+less		.	.	.	.	i	-
+libassuan	.	.	.	.	l	make check (P)
+libcap		.	.	.	.	l	- (needs root)
+libevent	.	.	.	.	l	make check (P)
+libffi		.	.	.	.	l	(prereq)
+libgcrypt	.	.	.	.	.	make check (P)
+libgpg-error	.	.	.	.	.	make check (P)
+libksba		.	.	.	.	l	make check (P)
+libmpc		.	.	.	.	l	make check (P)
+libpcap		.	.	.	.	.	-
+libpipeline	.	.	.	.	l	-
+libsigsegv	.	.	.	.	l	make check (P)
+libtool		.	.	.	.	.	make check (3F)
+libx86		.	.	.	.	l	-
+libxml2		.	.	.	.	.	make check (10F)
+linux		.	.	.	.	b	-
+lvm2		x	.	.	x	.	-
+m4		.	.	.	.	.	make check (1F bb)
+make		.	.	.	.	c	make check (1F)
+man-db		.	.	.	.	i	make check (3F)
+man-pages	.	.	.	.	.	-
+mdadm		x	x	.	.	.	- (root)
+memcached	.	x	.	.	.	-
+mkinitramfs	.	.	.	x	.	n/a
+mpfr		.	.	.	.	l	make check (P)
+nasm		.	.	.	.	.	(prereq)
+ncurses		.	.	.	.	i	-
+neon		.	.	.	.	l	(prereq)
+nettle		.	.	.	.	.	make check (P)
+openssl		.	.	.	.	.	make test (P)
+opkg		.	.	.	.	c	-
+patch		.	.	.	.	c	make check (2F)
+pciutils	.	.	x	.	.	-
+pcre		.	.	.	.	.	make check (P)
+perl		.	.	.	.	.	make test (3F)
+pinentry	.	.	.	.	i	-
+pkg-config	.	.	.	.	.	make check (4F)
+popt		.	.	.	.	l	make check (P)
+pth		.	.	.	.	l	make check (P)
+python2		.	.	.	.	.	make test (4F 1A 47S)
+rsync		.	.	.	.	.	make check (1F)
+ruby		.	.	.	.	.	make check (hangs)
+serf		.	.	.	.	l	make check (P)
+sqlite		.	.	.	.	.	-
+strace		.	.	.	.	.	(prereq)
+subversion	.	.	.	.	.	make check (prereq)
+syslinux	.	.	.	.	b	-
+sysstat		x	.	x	.	.	-
+tar		.	.	.	.	c	make check (P)
+tcpdump		.	.	.	.	.	make check
+texinfo		.	.	.	.	.	make check (P)
+tmux		.	.	.	.	i	-
+tzdata		.	.	.	.	.	-
+unifdef		.	.	.	.	.	make test (P)
+user		.	.	.	.	c	n/a
+vim		.	.	.	.	i	make test (1F)
+wget		.	.	.	.	c	make check (P)
+zlib		.	.	.	.	l	make check (P)
+
+===============================================================================

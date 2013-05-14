@@ -1,0 +1,3 @@
+ssh		22/tcp
+ntp		123/udp
+chronycmd	323/udp

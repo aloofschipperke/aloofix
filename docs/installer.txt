@@ -1,0 +1,333 @@
+CD Installation
+===============
+
+This file is part of the Aloofix Project.  You can redistribute the
+file and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation; either version 3
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see http://www.gnu.org/licenses/.
+
+Introduction
+------------
+
+The primary method for installing an Aloofix instance is with the use
+of an installation ISO image. This document provides information about
+using an installation ISO image and creating new ISO images.
+
+Installing Aloofix
+------------------
+
+This section provides some details on the installation script. The
+basic steps are listed below. The details are listed in subsequent
+subsections.
+
+* select the disk(s)
+* partition the disk(s)
+* optionally initialize the raid configuration (mdadm)
+* optionally initialize logical volume management (lvm2)
+* create filesstems
+* install packages
+* install the bootloader
+* do some final localizations of the installation
+
+### Select Disk
+
+The installer scans the environment, trying to find a disk to use as
+the target device. It will look for entries in `/dev` that match the
+following patterns:
+
+    vd? sd? hd? ubd?
+
+It excludes the cd device, for fairly obvious reasons. If it finds
+one, it will proceed with the installation, otherwise fail with an
+error message.
+
+The installer is currently rather naive about which hard drive to
+use. If it finds one hard drive, it will use that device and proceed
+with the installation. If multiple hard drives are found, it will exit
+with an error message. The user will need to specify the appropriate
+devices on the command line.
+
+### Partition
+
+The installer uses the busybox `fdisk` command to create the initial
+partitions. The installer create three partitions: boot, swap, and
+root.
+
+### Raid
+
+If enabled, `install2hd` will install mdadm on the target hard drive,
+do the initial setup of the raid configuration, and add the
+appropriate hooks to the initramfs configuration.
+
+Note that the mdadm package is not built or available for installation
+during the first stage of the buildstrap process.
+
+### Logical Volume Management
+
+If enabled, `install2hd` will install lvm2 on the target hard drive,
+do the initial setup of the logical volumes, and add the appropriate
+hooks to the initramfs configuration.
+
+As with mdadm, the lvm2 package is not built or available for
+installation during the first stage of the buildstrap process.
+
+### Creating Filesystems
+
+This stage creates the filesystems for the boot and root partitions,
+and initiazlies the swap partition.
+
+### Installation Packages
+
+The base packages are installed as well as any additional package
+sets.
+
+### Installing the bootloader
+
+The bootloader installation copies the `mbr.bin` file to the hard
+drive and installs the bootloader.
+
+### Localizations
+
+The last stage of the installation tweaks the hard drive installation,
+making the following changes:
+
+* set hostname
+* tweak the /etc/hosts file
+* enables the dhcp for eth0
+* enables the sv services for ifplugd, klogd, syslogd, dropbear, and ntpd
+* enables the console getty in /etc/inittab
+* enabled firstboot scripts
+* sets the root password
+* tweaks the bootloader configuration script
+* tweaks the /etc/fstab file
+* initializes the initramfs image if enabled
+
+Note that the initramfs package is not built or installed during the
+first stage of the buildstrap process.
+
+Command-line options
+--------------------
+
+The `install2hd` understand the following command-line options.
+
+* --initramfs
+
+  This options will configure the hard drive installation to use an
+  initramfs. This gets automatically selected if `mdadm` or `lvm` are
+  enabled.
+
+* --mdadm=$raidtype
+
+  This options will configure the hard drive installation to add
+  software raid. The `$raidtype` value should be `raid0`, `raid1`,
+  etc. The configuration mechanism is still rather primitive. It's
+  recommend to start simply for the installation phase and add more
+  complexity once the initial installation is up and running.
+
+* --lvm
+
+  This option will configure the hard drive installation to add LVM2
+  support. It creates a vg0 for the root filesystem, leaving the boot
+  and swap partisions are non-LVM partitions. If both mdadm and lvm
+  are enabled, the mdadm configuration is run first, thus logical
+  volumes on top of software raid partitions.
+
+* --hddev=/dev/HD		(can also be a space-separated list)
+
+  If onely one hard drive is found, the Aloofix installation selects
+  that drive automatically as the installation target. If multiple
+  drives exist, however, it will exit with a message, asking the user
+  to select which disk to use as the target. This options selects a
+  hard drive as the installation target. The value can also be a
+  space-separated list when using mdadm, and the configuration mdadm
+  will span the multiple drives.
+
+* --fstype=$fstype
+
+  The installation creates two partitions - boot and root. Aloofix
+  uses ext2 for the boot filesystem, and does not provide a mechanism
+  to alter this policy decision. The root filesystem can be ext2,
+  ext3, or ext4. The ext4 filesystem is the default type used by
+  Aloofix. This options allows you to select one of the another
+  types. Other filesystem types are not currently supported. (we're
+  thinking about it...)
+
+* --bootsize=$bootpartsize_mb
+
+  The default boot partition size is 16MB. This option allows you to
+  change the boot partition size.
+
+* --swapsize=$swappartsize_mb
+
+  The default swap partition size is 1GB. This option allows you to
+  change the swap partition size.
+
+* --pkgsets=\"$packageset+\"	(space-separated list)
+
+  An installation ISO image as a default package set to install on the
+  hard drive. For example, the buildstrap image installs the toolchain
+  package chain. For ISO images with multiple packages, this option
+  allows you to select which package sets to install on the hard
+  drive. All installation ISOs include the `base` package set.
+
+* --force-fdisk
+
+  The `install2hd` script does not by default repartition a hard drive
+  is it detects partitions on the disk. This option overrides that
+  behavior and deletes existing partitions and repartitions for the
+  Aloofix installation.
+
+* --force-md0
+
+  As with the disk partitioning, the `mdadm` installation does not
+  reconfigure the raid configuration if it detects a raid
+  configuration already in place. This option overrides that behavior.
+
+* --force-vg0
+
+  As with the disk partitioning and raid configuration, the `lvm`
+  installation does not reconfigure the logical volume configuration
+  if it detects one in place. This option overrides that behavior.
+
+Note that the initramfs, mdadm, and lvm options will not work during
+the first stage of the buildstrap procedure.
+
+Package Sets
+------------
+
+The CD installer can install one or more package sets present on the
+ISO image. The folling subsections list the ones provided by default.
+
+### toolchain
+
+The `toolchain` package set contains packages needed to run the
+`build-pkg` script. These packages are the minimum set of packages
+needed to do any compilation.
+
+* user-web, user-build
+* make
+* binutils-lib, binutils
+* glibc-dev
+* linux-dev
+* gcc-gcclib, gcc-lib, gcc
+* gmp-lib
+* mpfr-lib
+* libmpc-lib
+* tar
+* fakeroot
+* aloofix-src
+
+Users that have done a buildstrap procedure, possibly without
+realizing it, have been exposed to this package.
+
+### base
+
+* base
+* syslinux
+* linux
+* glibc-min, glibc-lib, glibc
+* tzdata-min
+* busybox
+* opkg-lib, opkg
+* e2fsprogs-lib, e2fsprogs
+* zlib-lib
+* dropbear
+
+### initramfs
+
+* mkinitramfs
+
+### lvm2
+
+* lvm2-devmapper
+* lvm2-lib
+* lvm2
+
+### mdadm
+
+* linux-md
+* linux-crypto
+* mdadm-min
+* mdadm
+
+Creating new ISO images
+-----------------------
+
+ISO image specifications are contained in the `imagespecs`
+directory. Each image flavor is a subdirectory in that directory,
+which a `spec.sh` file that sets the various settings for the image.
+
+New ISO images can be created by copying one of the existing
+specifications, altering the specification, and then using `mkimage`
+to create the new image.
+
+Each image specification is a directory contained in the `imagespecs`
+directory. The directory contains a `spec.sh` file with variables that
+convey which package files should be installed on the ISO image.
+
+### Adding new package sets
+
+One of the simplest changes to make is to create an ISO image with
+additional packages, namely adding a new package set to an ISO image.
+
+The ISO image specifications are designed to be hierarchical. The
+basic installer specification is contained in the `aloofix-installer`
+script. This specification builds an installation ISO image containing
+the base Aloofix packages and packages needed for RAID and LVM
+configurations.
+
+The buildstrap ISO image is a child specification, so to speak.  It
+incorporates the specification for `aloofix-installer` and adds the
+toolchain packages to the image. Reviewing these specifications
+provides a good clue for how to add another package set.
+
+As an example, say we want to create an ISO image that contains the
+basic installer packages, but also installs emacs and tmux. Let's call
+this new package set `myeditor`.
+
+The first step is to copy the `aloofix-buildstrap` directory to a new
+directory and copy the `spec.sh` file.
+
+    $ cd imagespecs
+    $ mkdir aloofix-myeditor
+    $ cp aloofix-buildstrap/spec.sh aloofix-myeditor
+
+Next, edit `aloofix-myeditor/spec.sh` file and make the following
+changes:
+
+* change the `appid` variable to `Aloofix CD with my editor stuff`.
+* change the first argument to the `add_pkgset` command to myeditor
+* change the rest of the arguments to `add_pkgset` to be the list of packages.
+
+The resulting command should look like this:
+
+    add_pkgset myeditor \
+        ncurses-license ncurses \
+	emacs-license emacs-common emacs-nox
+
+After saving the changes, run the following command:
+
+    scripts/mkimage aloofix-myeditor
+
+This should create a new ISO image in the `images` directory with your
+package set.
+
+When you install the ISO image, make sure to use the `--pkgsets`
+variable with `install2hd` to include your packages when installing to
+the hard drive.
+
+    ./install2hd --pkgset=myeditor
+
+If no errors were encountered, you should have a basic Aloofix
+instance installed on the hard drive with emacs installed.
+
+# Thanks!
+

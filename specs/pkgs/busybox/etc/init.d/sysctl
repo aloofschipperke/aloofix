@@ -1,0 +1,25 @@
+#!/bin/ash
+
+# busybox sysctl doesn't support -q option, but we provide a var to add it in
+# case a different sysctl is used
+quiet=y
+
+[ -f /etc/sysconfig/sysctl ] && . /etc/sysconfig/sysctl
+
+output=/dev/tty
+[ -z "$quiet" ] || output=/dev/null
+
+case "$1" in
+    start)
+	for F in /etc/sysctl.conf /etc/sysctl.d/*.conf
+	do
+	    [ -f "$F" ] && /sbin/sysctl -p "$F" >$output
+	done
+	;;
+    *)
+	echo "Usage: $0 start" >&2
+	exit 1
+	;;
+esac
+
+exit 0

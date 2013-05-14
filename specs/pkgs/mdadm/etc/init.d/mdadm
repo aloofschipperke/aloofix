@@ -1,0 +1,23 @@
+#!/bin/ash
+
+[ -f /etc/sysconfig/mdadm ] && . /etc/sysconfig/mdadm
+
+case "$1" in
+start)
+	/sbin/mdadm --assemble --scan
+	;;
+stop)
+	/sbin/mdadm --stop --scan
+	;;
+restart)
+	$0 start
+	sleep 1
+	$0 stop
+	;;
+*)
+	echo "Usage: $0 {start|stop|restart}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

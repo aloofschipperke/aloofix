@@ -1,0 +1,289 @@
+#!/bin/sh
+
+# This file is part of the Aloofix project.
+# Copyright (C) 2013 Kevin Johnson <aloof.schipperke@gmail.com>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or (at
+# your option) any later version.
+
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see http://www.gnu.org/licenses/.
+
+set -e
+set -u
+
+top=$(pwd)
+. "$top/config.sh"
+
+die() { echo -e "\n$*" >/dev/tty; exit 1; }
+usage() { echo "usage: $0 [--list] [--create] \$imagename" 1>&2; exit 2; }
+status() { [ "$do_quiet" ] || echo "$*"; }
+status_n() { [ "$do_quiet" ] || echo -n "$*"; }
+
+###############################################################################
+
+args=$(getopt -l quiet,help,list,create,fakeroot '' "$@")
+[ $? -eq 0 ] || usage
+
+do_fakeroot=
+do_list=
+do_create=
+do_quiet=
+eval set -- "$args"
+for arg
+do
+    case "$arg" in
+	--fakeroot)
+	    [ "$IN_FAKEROOT" ] \
+		|| die "--fakeroot is only for internal use by $0"
+	    do_fakeroot=yes
+	    shift ;;
+	--list)
+	    do_list=yes
+	    shift ;;
+	--create)
+	    do_create=yes
+	    shift ;;
+	--quiet)
+	    do_quiet="--quiet"
+	    shift ;;
+	--help)
+	    usage ;;
+	--)
+	    shift;
+	    break ;;
+    esac
+done
+
+if [ "$do_list" ]
+then
+    ls -x "$imagespectree"
+    exit
+fi
+
+user=$(id -un)
+[ "$do_fakeroot" ] || [ "$user" != root ] || die "do not run $0 as root"
+
+[ $# -eq 1 ] || usage
+
+###############################################################################
+
+imagename="$1"
+
+devices=
+
+fstree="$imagetrees/$imagename"
+imagespecdir="$imagespectree/$imagename"
+imagespec="$imagespecdir/spec.sh"
+
+[ -d "$imagedir" ] || mkdir "$imagedir"
+[ -d "$imagetrees" ] || mkdir "$imagetrees"
+
+packages=
+extra_packages=
+directories=
+initrd=
+
+if [ "$do_create" ]
+then
+    [ ! -f "$imagespec" ] || die "$imagename already exists"
+    [ -d "$imagespecdir" ] || mkdir "$imagespecdir"
+    install -m 644 "$imagespectree/.spec.template" "$imagespec"
+    exit
+fi
+
+[ -f "$imagespec" ] || die "can't find image spec for $imagename"
+
+###############################################################################
+# convenience functions for use within spec.sh files
+
+include() {
+    [ -f "$imagespectree/$1/spec.sh" ] \
+	|| die "trying to include $1 - unknown imagename"
+    . "$imagespectree/$1/spec.sh"
+}
+
+###############################################################################
+
+function_defined() { type "$1" >/dev/null 2>&1; }
+recreate_dir() { [ ! -d "$1" ] || rm -rf "$1"; install -d -m 755 "$1"; }
+
+_create_directories() {
+    if [ -z "$directories" ]
+    then
+	status "No directories created"
+	return 0
+    fi
+    status_n "Directories:"
+    echo "$directories" | while read perm dir
+    do
+	[ "$perm" ] || continue
+	status_n " $dir"
+	install -d -m $perm "$fstree$dir"
+    done
+    status ''
+}
+
+create_device() {
+    status_n " $1"
+    mknod -m $2 "$fstree/dev/$1" $3 $4 $5
+}
+
+_create_devices() {
+    if [ -z "$devices" ]
+    then
+	status "No devices created"
+	return 0
+    fi
+    status_n "Devices:"
+    install -d -m 0755 "$fstree/dev"
+    for devicename in $devices
+    do
+	args=$(echo "$devicelist" | grep -w "^$devicename")
+	[ "$args" ] || die "unknown device type: $devicename"
+	create_device $args
+    done
+    status ''
+}
+
+_install_initrd() {
+    if [ "$initrd" ]
+    then
+	status "Initrd: $initrd"
+	[ -f "$imagedir/$initrd" ] || die "$initrd not found"
+	cp -p "$imagedir/$initrd" "$fstree/boot"
+    fi
+}
+
+install_package() {
+    local pkgcnt
+    cd "$top"
+    # ash doesn't support brace expansions, so this gets a little ugly
+    pkgcnt=$(ls -1 pkgs/${1}_*_${arch}.opk pkgs/${1}_*_noarch.opk 2>/dev/null | wc -l)
+    [ $pkgcnt -gt 0 ] || die "can't find package $1 for $arch or noarch"
+    [ $pkgcnt -eq 1 ] || die "more than more package version for $1"
+    pkgname=$(ls -1 pkgs/${1}_*_${arch}.opk pkgs/${1}_*_noarch.opk 2>/dev/null | cat)
+
+    cd "$fstree" || die "failed cd to $fstree"
+    (cd "$top" || die "failed cd to top-level directory"
+	tar xOf "$pkgname" ./data.tar.gz
+    ) | tar xzf -
+}
+
+_install_packages() {
+    if [ -z "$packages" ]
+    then
+	status "No packages installed"
+	return 0
+    fi
+    status_n "Installing:"
+    for pkg in $packages
+    do
+	status_n " $pkg"
+	install_package $pkg
+    done
+    status ''
+} 
+
+_localize() {
+    cd "$fstree" || die "cd to $fstree failed"
+    if ! function_defined localize
+    then
+	status "No localizations"
+	return 0
+    fi
+    status Localizing
+    localize
+}
+
+copy_spec_files() {
+    [ "$1" ] || return 0
+    (cd "$imagespecdir" &&
+	tar -c -f - --exclude-vcs --exclude-backups $1
+    ) | tar -x --no-same-owner -f - -C "$fstree"
+}
+
+###############################################################################
+
+_bundle() {
+    status Bundling $imagetype
+    cd "$imagedir"
+    function_defined "bundle_$imagetype" \
+	|| die "no bundle recipe available for $imagetype"
+    bundle_"$imagetype" || return 1
+}
+
+bundle_initrd() {
+    local dir
+    dir=$(pwd)
+    cd "$fstree"
+    find . | cpio -H newc -o -F "$imagedir/$imagename"
+    cd "$dir"
+    gzip -9 -f "$imagedir/$imagename"
+}
+
+tarballname=
+compression_suffix=gz
+bundle_tarball() {
+    local comp_flag=
+    for suffix in $compression_suffix
+    do
+	case "$suffix" in
+	    gz)
+		comp_flag=z ;;
+	    xz)
+		comp_flag=J ;;
+	    bz2)
+		comp_flag=j ;;
+	    *)
+		die "invalid compression suffix: $suffix" ;;
+	esac
+	[ "$tarballname" ] || tarballname=$imagename
+	tar -c -$comp_flag \
+	    -f "$imagedir/$tarballname.tar.$suffix" \
+	    -C "$fstree" .
+    done
+}
+
+bundle_iso() {
+    mkisofs -R -V "$volumeid" \
+	-A "$appid" \
+	-b boot/isolinux/isolinux.bin -c boot/isolinux.boot.cat \
+	-no-emul-boot -boot-load-size 4 -boot-info-table \
+	-l \
+	-o "${imagename}.iso" "$fstree"
+}
+
+###############################################################################
+
+. "$imagespec"
+
+if [ -z "$do_fakeroot" ]
+then
+    for P in $packages $extra_packages
+    do
+	./scripts/build-pkg $P || die "build-pkg $P failed"
+    done
+    recreate_dir "$fstree"
+    export IN_FAKEROOT=y
+    fakeroot -l /usr/lib/libfakeroot/libfakeroot.so -- \
+	$(realpath $0) $do_quiet --fakeroot "$1"
+    exit $?
+else
+    _create_directories
+    _create_devices
+    _install_packages
+    _install_initrd
+    _localize
+    _bundle
+    status done
+fi
+
+###############################################################################

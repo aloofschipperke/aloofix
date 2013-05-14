@@ -1,0 +1,4 @@
+root:x:0:
+tty:x:5:
+disk:x:6:
+kmem:x:9:

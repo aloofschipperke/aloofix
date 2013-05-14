@@ -1,0 +1,36 @@
+#!/bin/ash
+
+kexec_enabled=y
+
+[ -f /etc/sysconfig/kexec ] && . /etc/sysconfig/kexec
+
+die() { echo "$@" >&2; exit 1; }
+
+[ -x /sbin/kexec ] || die "kexec executable not found"
+[ "$kexec_enabled" -a ! -e /nokexec ] || die "kexec disabled"
+
+kexec_loaded="$(cat /sys/kernel/kexec_loaded)"
+[ "$kexec_loaded" = 1 ] && die "kernel image already loaded"
+
+kernel=
+initrd=
+for arg in $(cat /proc/cmdline)
+do
+    case "$arg" in
+	/*)
+	    [ "$kernel" ] || kernel="/boot/$arg"
+	    [ -f "$kernel" ] || die "$0: can't find $kernel"
+	    ;;
+	initrd=*)
+	    initrd="/boot/${arg#*=}"
+	    [ -f "$initrd" ] || die "$0: can't find $initrd"
+	    ;;
+    esac
+done
+
+[ "$kernel" ] || die "$0: can't find kernel in /proc/cmdline"
+
+[ -z "$initrd" ] || initrd="--initrd=$initrd"
+/sbin/kexec -l "$kernel" $initrd --reuse-cmdline
+
+exit 0

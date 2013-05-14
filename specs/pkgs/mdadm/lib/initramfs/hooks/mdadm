@@ -1,0 +1,9 @@
+#!/bin/ash
+
+COMMANDS=mdadm
+FILES=/etc/mdadm.conf
+MODULES="raid0 raid1 raid456 raid10"
+
+run_hook() {
+    [ -f /etc/mdadm.conf ] && /sbin/mdadm --assemble --scan --run
+}

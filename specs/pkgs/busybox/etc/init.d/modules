@@ -1,0 +1,24 @@
+#!/bin/ash
+
+case "$1" in
+    start)
+	[ -d /lib/modules ] || exit 0
+	depmod
+	for F in /etc/modules /etc/modules.d/*
+	do
+	    if [ -f "$F" ]
+	    then
+		/bin/grep '^[^#]' "$F" | while read module_name
+		do
+		    /sbin/modprobe $module_name
+		done
+	    fi
+	done
+	;;
+    *)
+	echo "Usage: $0 {start}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

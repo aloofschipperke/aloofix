@@ -1,0 +1,18 @@
+#!/bin/ash
+
+case "$1" in
+    start)
+	/bin/mountpoint -q /dev || {
+	    /bin/mount -t tmpfs mdev /dev -omode=0755
+	    echo /sbin/mdev >/proc/sys/kernel/hotplug
+	    /sbin/mdev -s
+	}
+	[ -d /dev/shm ] || mkdir /dev/shm
+	;;
+    *)
+	echo "Usage: $0 start" >&2
+	exit 1
+	;;
+esac
+
+exit 0

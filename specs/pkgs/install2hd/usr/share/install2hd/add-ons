@@ -1,0 +1,67 @@
+#!/bin/ash
+###############################################################################
+# Script to install Aloofix add-on packages on the hard drive.
+# Copyright (C) 2008-2010, 2013  Kevin Johnson <aloof.schipperke@gmail.com>
+#
+# This file is part of Aloofix.
+# Aloofix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Aloofix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###############################################################################
+
+[ "$root_mount" ] || die "Do not run $0 directly."
+
+for mntdir in "$root_mount" "$boot_mount"
+do
+    /bin/mountpoint -q "$mntdir" || die "$mntdir isn't mounted"
+done
+
+has_addons=
+for pkgset in $pkgsets
+do
+    [ "$pkgset" != base ] || continue
+    echo "--> adding $pkgset packages" >&2
+    manifest="${cdrom_mount}/pkgs/${pkgset}.list"
+    [ -f "$manifest" ] || die "Internal error: can't find $manifest"
+    has_addons=yes
+    (cd "$cdrom_mount/pkgs"
+	/bin/cp $(/bin/cat "$manifest") "$root_mount/tmp"
+    )
+done
+
+if [ "$has_addons" ]
+then
+    chroot "$root_mount" \
+	opkg install $(cd "$root_mount"; ls tmp/*.opk) \
+	|| die "add_on package installation failed"
+    rm -f "$root_mount"/tmp/*.opk
+    rm -rf "$root_mount"/tmp/usr
+fi
+
+# manifest="${cdrom_mount}/pkgs/${pkgset}.list"
+# if [ "$pkgset" = base ]
+# then
+#     true
+# elif [ -f "$manifest" ]
+# then
+#     echo "--> adding $pkgset packages" >&2
+#     (cd "$cdrom_mount/pkgs"
+# 	/bin/cp $(/bin/cat "$manifest") "$root_mount/tmp"
+#     )
+#     chroot "$root_mount" \
+# 	opkg install $(cd "$root_mount"; ls tmp/*.opk) \
+# 	|| die "add_on package installation failed"
+#     rm -f "$root_mount"/tmp/*.opk
+#     rm -rf "$root_mount"/tmp/usr
+# else
+#     die "Internal error: should have already detected unknown package set $pkgset"
+# fi

@@ -1,0 +1,149 @@
+#!/bin/ash
+###############################################################################
+# Master script for installing aloofix to a hard disk.
+# Copyright (C) 2008-2010, 2013  Kevin Johnson <aloof.schipperke@gmail.com>
+#
+# This file is part of Aloofix.
+# Aloofix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Aloofix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###############################################################################
+
+set -e
+set -u
+
+disk_query_list="/dev/vd? /dev/sd? /dev/hd? /dev/ubd?"
+
+hostname=
+bootfstype=ext2
+fstype=ext4
+hd_dev=
+part1size=16
+part2size=1024
+root_mount=/mnt/hd
+boot_mount="$root_mount/boot"
+cdrom_mount=/mnt/cdrom
+pkgsets=$(cat $cdrom_mount/pkgs/default.pkgsets)
+scriptdir="$cdrom_mount/usr/share/install2hd"
+hooks=
+force_fdisk=
+force_md0=
+force_vg0=
+
+do_initramfs=
+do_mdadm=
+do_lvm=
+
+scripts="select-disk partition mdadm lvm filesystems
+	packages add-ons bootloader localize"
+
+###############################################################################
+
+usage="Usage: $0 [options]
+    Options: --initramfs
+             --mdadm=RAIDTYPE
+             --lvm
+             --fstype=FSTYPE
+             --hddev=/dev/HD		(can also be a space-separated list)
+             --bootsize=BOOTPARTSIZE_MB
+             --swapsize=SWAPPARTSIZE_MB
+             --pkgsets=\"PACKAGESET+\"	(space-separated list)
+			Some pkgsets available:
+			     base initramfs mdadm lvm toolchain
+             --force-fdisk
+             --force-md0
+             --force-vg0"
+
+warn() { echo "$@" >&2; }
+die() { warn "$@"; exit 1; }
+usage() { warn "$usage"; exit 2; }
+
+###############################################################################
+
+args=$(getopt -o h -l 'help,initramfs,fstype:,hddev:,bootsize:,swapsize:,pkgsets:,lvm,mdadm:,force-fdisk,force-md0,force-vg0' -- "$@")
+[ $? -eq 0 ] || usage
+
+eval set -- "$args"
+while true
+do
+    case "$1" in
+	--initramfs)
+	    do_initramfs=y; shift;;
+	--mdadm)
+	    [ -x /sbin/mdadm ] || die "mdadm is not available."
+	    do_initramfs=y; do_mdadm="$2"; shift 2;;
+	--lvm)
+	    [ -x /usr/sbin/lvm ] || die "lvm is not available."
+	    do_initramfs=y; do_lvm=y; shift;;
+	--fstype)
+	    fstype="$2"; shift 2;;
+	--hddev)
+	    hd_dev="$2";
+	    hd_dev="${hd_dev/,/ }"
+	    for device in $hd_dev
+	    do
+		[ -b "$device" ] \
+		    || die "Invalid hddev value: \"$device\" isn't a block device"
+	    done
+	    shift 2;;
+	--bootsize)
+	    part1size="$2"; shift 2;;
+	--swapsize)
+	    part2size="$2"; shift 2;;
+	--pkgsets)
+	    pkgsets="$2"; shift 2;;
+	--force-fdisk)
+	    force_fdisk=y; shift;;
+	--force-md0)
+	    force_md0=y; shift;;
+	--force-vg0)
+	    force_vg0=y; shift;;
+	--help|-h)
+	    warn "$usage"; exit 0;;
+	--)
+	    shift; break;;
+	*)
+	    die "Internal error!";;
+    esac
+done
+
+[ "$(which fsck.$fstype)" ] || die "Unsupported filesystem type: $fstype"
+
+[ -z "$do_initramfs" ] || pkgsets="$pkgsets initramfs"
+[ -z "$do_mdadm" ] || pkgsets="$pkgsets mdadm"
+[ -z "$do_lvm" ] || pkgsets="$pkgsets lvm"
+
+for pkgset in $pkgsets
+do
+    [ -f "$cdrom_mount/pkgs/${pkgset}.list" ] \
+	|| die "Unknown package set: $pkgset"
+done
+
+###############################################################################
+# installation scripts
+###############################################################################
+
+for script in $scripts
+do
+    [ -f "$scriptdir/$script" ] || continue
+
+    [ "$script" != 'lvm' -o "$do_lvm" ] || continue
+    [ "$script" != 'mdadm' -o "$do_mdadm" ] || continue
+
+    echo "-> $script"
+
+    . "$scriptdir/$script" >/tmp/${script}.out
+done
+
+echo "Done. Installation output written to /tmp"
+
+exit 0

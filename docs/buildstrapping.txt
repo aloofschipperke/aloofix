@@ -1,0 +1,343 @@
+Buildstrapping Aloofix
+======================
+
+This file is part of the Aloofix Project.  You can redistribute the
+file and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation; either version 3
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see http://www.gnu.org/licenses/.
+
+
+Introduction
+------------
+
+The buildstrap procedure is the way an initial Aloofix instance is
+created.  The procedure is a bit of a dodge. Rather than building a
+cross-platform build environment or a chroot isolated environment, an
+initial instance is built on a different Linux distribution (currently
+ArchLinux). This instance contains the core Aloofix packages and the
+minimum toolchain packages Aloofix needs to build itself.
+
+The major steps are as follows:
+
+* Build an initial ISO image on ArchLinux
+* Boot the initial ISO image and build a 2nd ISO image
+* Boot the 2nd image and build the packages for a build/package server
+
+This process takes approximately 2-2.5 hours using 4-vCPU VMs.
+
+For the instructions in this document, the assumption is that the user
+will be using VMs for both the Archlinux system and for the Aloofix
+build server. Requirements are listed below.
+
+
+Requirements
+------------
+
+The following requirements must be met in order to successfully
+complete the buildstrap instructions contained in this document.
+
+### Initial Build System
+
+* i686-class CPU
+
+    The default configuration creates binaries for i686
+    processors. This is configurable, but other processor classes have
+    not been tested.
+  
+* 256MB+ RAM
+
+    This is rough guideline. Aloofix itself tends to require less RAM
+    than most mainstream distributions, but overall performance will
+    generally improve if more RAM is configured into the VM
+    instance. Your mileage may vary.
+
+* 8GB+ Disk
+
+    This is a rough guideline. While a base Aloofix distribution
+    requires a much smaller amount of disk space, the buildstrap
+    procedure will require 8GB. Allocate more disk space if you plan
+    to compile add-on packages beyond those built as part of the
+    buildstrapping procedure. As of the writing of this documentation,
+    the buildhost requires approximately 12GB to build all packages.
+
+* Internet Access
+
+    The Aloofix build system downloads source tarballs from the
+    Internet. The build will not work if packages cannot be
+    retrieved. The downloads use the HTTP and FTP protocols, so
+    firewall rules need to allow these outbound protocols.
+
+
+### VM Engine
+
+Aloofix is currently built as a 32-bit environment, with the primary
+development work is done in KVM. It should, however, work in any of
+the following VM engines, but testing is minimal.
+
+* Qemu (x86)
+* Sun Microsystems VirtualBox
+* VMWare Fusion, Workstation, ESXi
+
+
+In general, the latest version of any of these engines should work for
+development and testing of Aloofix.
+
+Support for 64-bit and EC2 is in process. Some testing has been done
+on Amazon EC2. This imples it will also work on other Xen
+implementations, but this has not yet been tested. Future versions
+will include support for Xen. Bug reports or patches gleefully
+accepted.
+
+### VM Instances
+
+Two VM instances are needed for the initial build procedure.
+
+#### Initial Build Distro
+
+The first stage of the build process is done in ArchLinux. With the
+rolling release model used by ArchLinux, the newest toolchain is
+available for compiling the Aloofix toolchain. Patches are accepted
+for building Aloofix on other distros, but the primary development
+environment uses ArchLinux.
+
+It might be possible to build Aloofix on other Linux distributions,
+but it's not unusual to find little idiosyncrasies that interfere with
+the build. Other distributions are not supported, but bug fixes that
+improve the ability to build Aloofix in more places are welcome.
+
+#### Initial Aloofix Instance
+
+The first stage of the buildstrap procedure is to create an initial
+installation ISO image from the initial build distro (ArchLinux).
+
+Stage1
+------
+
+    $ wget http://downloads.sourceforge.net/aloofix/aloofix-0.9.tar.gz
+    $ tar xf aloofix-0.9.tar.gz
+    $ cd aloofix-0.9
+
+The primary configuration variables are located in `config.sh`.  The
+primary vaiable that might need to be edited is `timezone`. It needs
+to be set to the appropriate timezone value.
+
+There are other variables that can be adjusted. For an initial
+attempt, it's best to keep the other variables as is.
+
+With the initial variables set accordingly. The stage1 build can now
+be run.
+
+    $ ./scripts/buildstrap
+
+If successful, the script will generate an ISO image in the `images`
+subdirectory.
+
+    images/aloofix-buildstrap.iso
+
+This ISO contains the base packages and the initial toolchain used in
+the buildstrap procedure.
+
+Stage2
+------
+
+The stage2 build creates another ISO image containing the same set of
+packages on the stage1 ISO image, but compiled in an Aloofix instance.
+
+### Transfer ISO to VM host
+
+Once the stage1 ISO has been create, it needs to be copied to the VM
+host server. Implementation is left as an exercise for the
+reader. `:-)`
+
+### Create VM Instance
+
+The initial Aloofix VM instance for buildstrapping requires, at a
+minimum, the following resources:
+
+* 1+ vCPUs (2 or 4 vCPUs is better, as it generally speeds up compiles)
+
+  A good value for the cpu type is kvm32, or similar for other
+  virtualization platforms.
+
+* 256+MB RAM
+* 8-16GB Disk
+
+  A minimum of 12GB is recommended if the VM is ultimately going to be
+  the package server. Building all packages requires 12GB+.
+
+* 1 Network Interface
+
+  A NAT interface is ok, but a bridged or routed interface if the VM
+  is ultimately going to be the package server.
+
+* Internet access
+
+  The build process will use `wget` to retrieve source
+  tarballs. Incoming access is not required.
+
+
+Other instantiations of Aloofix will require more or less, but this is
+adequate for the buildstrapping procedure.
+
+### Boot ISO Image
+
+Booting the ISO image will present a boot menu. Select `Boot from CD`.
+
+Once the boot process is complete, a login prompt will be present.
+
+    initrd login:
+
+Enter `root` for the login name. The initial password is empty, so the
+password prompt will not be presented.
+
+    initrd login: root
+    login[1093]: root login on 'console'
+    root@initrd:~#
+
+### Install Aloofix to Hard Drive
+
+    root@initrd:~# install2hd
+
+You will be prompted for the root password to be used on the hard
+drive root account.
+
+Note that `install2hd` does not by default partition a hard drive if
+it sees any partitions on the drive. To force it to partition a hard
+drive that has partitions, deleting the existing partitions:
+
+    root@initrd:~# install2hd --force-fdisk
+
+The `install2hd` script writes output to the screen, but also write
+more detailed information to the `/tmp` directory. If the installation
+fails, check the files in `/tmp` for error messages. Note that the
+files in `/tmp` will not survive a reboot.
+
+
+### Reboot to HD Image
+
+Booting the ISO image will present a boot menu. Select `Boot from Hard Drive`.
+
+Once the boot process is complete, a login prompt will be present.
+
+    buildhost login:
+
+The name of the host will not be `buildhost`. The real hostname is
+generated by `install2hd` and will be `host` following by the
+macaddress. E.g. `host525400DACDE4`. This document uses `buildhost`
+since it's a bit easier on the eyes.
+
+Enter `root` for the login name. The password is the one provided to the ISO
+installer script.
+
+    buildhost login: root
+    Password:
+    root@buildhost:~#
+
+### Building Stage2
+
+We are now ready for the next stage of the build. The stage2 build is
+performed as the `build` user. The password for this account needs to
+be set before attempting a build.
+
+    root@buildhost:~# su - build
+    build@buildhost:~$ cd /usr/src/aloofix-0.9
+    build@buildhost:/usr/src/aloofix-0.9$ ./scripts/buildstrap
+
+The `buildstrap` script will prompt for root credentials to allow
+installation of packages needed by the buildstrap process.
+
+As with the stage1 build, the `buildstrap` script will deposit an
+ISO image in the `images` subdirectory is the script is successful.
+
+    images/aloofix-buildstrap.iso
+
+As before, the ISO image needs to be copied to the VM host machine,
+booted, and installed to the hard drive. If you reuse the VM from
+stage1, don't forget to use the `--force-fdisk` option when invoking
+`install2hd`, as the script will not override a partition table by
+default. Once the installation is complete, you can reboot to the hard
+drive.
+
+The initial build procedure is now complete. You now have an instance
+of Aloofix built from Aloofix. This instance is well suited for use as
+the build and opkg server, which is described in the next section.
+
+Build server
+------------
+
+Now that we have a 'native' Aloofix instance, it's time to turn the
+instance into a build server. The basic steps are as follows:
+
+* build and install a core set of applications
+* build and install prerequisite packages needed to build all packages
+* build all packages
+* enable the web server
+* push the packages to the web repository
+
+Thankfully, a shell script is provided to handle the first several
+items in the list.
+
+    # ./scripts/make-buildserver
+
+This handles the first two items in the list above. If you want to
+build all servers, add `--buildall` to the preceding
+`make-buildserver` command line.
+
+The next steps is to enable the web server:
+
+    # svadmin enable httpd
+    # install -d -o build /srv/www/aloofix
+
+This starts up the busybox httpd server. Support for other web servers
+is not currently supported. The assumption is that the build server
+will not be used as a general web server, so use of the busybox httpd
+daemon should be sufficient.
+
+Once the web server is enable, it needs a copy of the packages and the
+associate `Packages` files from the `pkgs` directory.
+
+    $ ./scripts/push-packages
+
+The push-packages uses rsync to copy the files in `pkgs` to
+`/srv/www/aloofix`. The `pkgs` directory is essentially a staging area
+populated by `build-pkg`. Note that packages removed from `pkgs` will
+be removed from the web directory.
+
+With the packages copied to the web repository, other Aloofix
+instances can use the package repository for package installations. In
+this case, the `/etc/opkg/opkg.conf` file on other Aloofix VM will
+need the following line added:
+
+    src aloofix http://$pkghost/aloofix
+
+Where `$pkghost` is the ip address or hostname of the build/package
+server. Once the line is added, execute `opkg update`. You should be
+able to see the list of packages with the `opkg list` command. Install
+packages at your leisure.
+
+For additional information on building packages and images, please
+read `docs/packaging.txt`. It contains information on building,
+installing, and adding new packages, as well as information on how to
+customize the installation ISO image or create new images.
+
+### Redistribution of binaries
+
+Please note that the license management function in Aloofix is still
+in early stages of development. Distribution of binaries built by an
+Aloofix build server requires careful analysis, since some of the
+license terms may have stipulations that Aloofix does not currently
+catch. Binary packages built by Aloofix are currently intended for
+internal use, not for external distribution.
+
+Other than that, go forth and be aloof.
+
+# Thanks!
+

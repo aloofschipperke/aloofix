@@ -1,0 +1,15 @@
+MODULES=dm-mod
+FILES="/etc/lvm/lvm.conf /lib/libdl.so.2"
+COMMANDS="lvm dmsetup"
+
+populate() {
+    [ -f /etc/lvm/lvm.conf ] || die "missing /etc/lvm/lvm.conf file"
+    cp -p /usr/lib/libdevmapper.so.1.02 lib
+    cp -p /usr/lib/libdevmapper-event.so.1.02 lib
+}
+
+run_hook() {
+    /usr/sbin/dmsetup mknodes
+    /usr/sbin/lvm vgscan --ignorelockingfailure >/dev/null
+    /usr/sbin/lvm vgchange -a y --sysinit vg0
+}

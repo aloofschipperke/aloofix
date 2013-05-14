@@ -1,0 +1,807 @@
+#!/bin/sh
+
+# This file is part of the Aloofix project.
+# Copyright (C) 2013 Kevin Johnson <aloof.schipperke@gmail.com>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or (at
+# your option) any later version.
+
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see http://www.gnu.org/licenses/.
+
+set -e
+set -u
+
+# defaults that can be overwritten by the top-level config file.
+make_j_qty=$(($(grep -c '^processor' /proc/cpuinfo) + 1))
+
+top=$(pwd)
+. "$top/config.sh"
+
+default_platform_arch=$arch
+
+die() { echo "$*" >/dev/tty; exit 1; }
+userwarn() { echo "$*" >/dev/tty; }
+status() { [ "$do_quiet" ] || echo "$*"; }
+usage() {
+    echo "usage: $0 [args]* \$pkgname
+	args:	--quiet --create --clean --list --force --stop
+		--newsigs
+" >&2
+    exit 2
+}
+assert_lock() {
+    exec 9>"$top/.build.lock"
+    if ! flock -n 9
+    then
+	userwarn "another instance of $0 is running"
+	exit 3
+    fi
+}
+
+args=$(getopt -l quiet,help,force,clean,list,create,newsigs,stop:,fakeroot '' "$@")
+[ $? -eq 0 ] || usage
+
+do_create=
+do_fakeroot=
+do_force=
+do_clean=
+do_quiet=
+do_newsigs=
+stop_after=
+eval set -- "$args"
+for arg
+do
+    case "$arg" in
+	--force)
+	    do_force=yes
+	    shift ;;
+	--stop)
+	    stop_after="$2"
+	    shift 2 ;;
+	--create)
+	    do_create=yes
+	    shift ;;
+	--clean)
+	    do_clean=yes
+	    shift ;;
+	--list)
+	    ls -x "$spectree"
+	    exit ;;
+	--fakeroot)
+	    [ "$IN_FAKEROOT" ] \
+		|| die "--fakeroot is only for internal use by $0"
+	    do_fakeroot=yes
+	    shift ;;
+	--quiet)
+	    do_quiet=yes
+	    shift ;;
+	--newsigs)
+	    do_newsigs=yes
+	    shift ;;
+	--help)
+	    usage ;;
+	--)
+	    shift
+	    break ;;
+    esac
+done
+
+user=$(id -un)
+[ "$do_fakeroot" ] || [ "$user" != root ] || die "do not run $0 as root"
+
+[ $# -eq 1 ] || usage
+
+###############################################################################
+
+pkg="$1"
+
+specdir="$spectree/$pkg"
+specfile="$specdir/spec.sh"
+
+[ "$do_fakeroot" ] || assert_lock
+
+if [ "$do_create" ]
+then
+    [ ! -f "$specfile" ] || die "package $pkg already exists"
+    [ -d "$specdir" ] || mkdir "$specdir"
+    install -m 644 "$spectree/.spec.template" "$specfile"
+    exit
+fi
+
+for d in "$imagetrees" "$logtree" "$pkgtrees" "$preinstalltree" \
+	 "$srctree" "$statusdir" "$tarballdir" "$pkgstree" "$imagedir"
+do
+    [ -d "$d" ] || mkdir -p "$d"
+done
+
+if [ ! -f "$specfile" ]
+then
+    # if the package isn't found, try removing a -* suffix and check again
+    parentpkg=${pkg%-*}
+    # subpkg=${pkg##*-}
+    specdir="$spectree/$parentpkg"
+    specfile="$specdir/spec.sh"
+    [ -f "$specfile" ] || die "package $pkg doesn't exist"
+    pkg="$parentpkg"
+fi
+
+patchlist=
+configure_args="--prefix=/usr
+	--sysconfdir=/etc
+	--localstatedir=/var
+	--datarootdir=/usr/share
+	--infodir=/usr/share/info
+	--mandir=/usr/share/man
+	--enable-shared
+	--disable-static
+	--disable-silent-rules
+	--disable-dependency-tracking"
+extra_configure_args=
+make_options=
+make_targets=
+install_options=
+compression_suffix=gz
+ssp=stack-protector
+wget_options=
+checksigs=y
+
+doc_pkg_files="usr/share/doc usr/share/info usr/share/man"
+extra_doc_files=
+doc_pkg_excludes=usr/share/info/dir
+
+extra_dev_pkg_files=
+extra_lib_pkg_files=
+dev_pkg_excludes=
+lib_pkg_excludes=
+
+base_pkg_files="."
+base_pkg_excludes=
+
+license_files=
+
+priority=optional
+depends=
+builddepends=
+conflicts=
+replaces=
+provides=
+extra_pkgs=
+default_dev_pkg_files=
+default_lib_pkg_files=
+build_subdir=
+extra_cflags=
+use_build_dir=
+build_dir=
+
+###############################################################################
+# various useful macros
+
+ensure_dir() { [ -d "$1" ] || install -d -m 755 "$1"; }
+recreate_dir() { [ ! -d "$1" ] || rm -rf "$1"; install -d -m 755 "$1"; }
+
+remove_empty_dirs() {
+    find "$1" -depth -mindepth 1 -type d \
+	-exec rmdir --ignore-fail-on-non-empty {} \;
+}
+
+qty_files_in_pkg() {
+    find "$pkgcontentdir" -type f | grep -v "$pkgcontentdir/CONTROL" | wc -l
+}
+
+as_tar_excludes() {
+    for item in "$@"
+    do
+	echo --exclude "$item"
+    done
+}
+
+control_field() {
+    [ "$2" ] || die "$1 value for ${pkg}-${subpkg} is empty or not defined"
+    echo "$1: $2" >>"$controlfile";
+}
+
+opt_control_field() { [ -z "$2" ] || control_field "$1" "$2"; }
+
+log() {
+    (date +"%s %c"; set -x; "$1" "$2"; date +"%s %c") \
+	>>"$logtree/$2/$1.log" 2>&1 \
+	|| die "$1" failed
+}
+
+function_defined() { type "$1" >/dev/null 2>&1; }
+
+run_package_recipe() {
+    if function_defined "package_$1"
+    then
+	"package_$1" || return 1
+    else
+	copy_preinstall_tree \
+	    "$(eval echo \$${1}_pkg_excludes)" \
+	    "$(eval echo \$${1}_pkg_files)" || return 1
+    fi
+}
+
+run_hook() {
+    ! function_defined "$1" || "$1" || return 1
+}
+
+pkg_is_installed() {
+    grep -q "^Package: $1$" /usr/lib/opkg/status || return 1
+}
+
+check_builddepends() {
+    if [ -f /etc/aloofix-release -a "$builddepends" ]
+    then
+	missing_builddepends=
+	for builddepend in $builddepends
+	do
+	    pkg_is_installed "$builddepend" \
+		|| missing_builddepends="$missing_builddepends $builddepend"
+	done
+	[ -z "$missing_builddepends" ] \
+	    || die "$pkg missing builddepends:$missing_builddepends"
+    fi
+}
+
+###############################################################################
+# functions for use in spec files
+
+pkg_file_mv() { mv "$pkgcontentdir$1" "$pkgcontentdir$2"; }
+
+copy_from_spec() {
+    [ "$1" ] || return 0
+    (cd "$specdir"; tar -c -f - --ignore-failed-read \
+	--exclude-vcs --exclude-backups \
+	$1) \
+	| tar -xv --no-same-owner -f - -C "$pkgcontentdir"
+}
+
+register_conffile() {
+    [ -f "$pkgcontentdir$1" ] || return 1
+    echo "$1" >>"$pkgcontentdir/CONTROL/conffiles"
+}
+
+register_preinst() { echo "$1" >>"$pkgcontentdir/CONTROL/preinst"; }
+register_prerm() { echo "$1" >>"$pkgcontentdir/CONTROL/prerm"; }
+register_postinst() { echo "$1" >>"$pkgcontentdir/CONTROL/postinst"; }
+register_postrm() { echo "$1" >>"$pkgcontentdir/CONTROL/postrm"; }
+
+register_alternative() {
+    register_postinst "update-alternatives --install $1 $(basename $1) $2 $3"
+    register_prerm "update-alternatives --remove $(basename $1) $2"
+}
+
+###############################################################################
+
+create_pkg_file() {
+    pkgtreedir="$pkgtrees/$pkg"
+    pkgcontentdir="$pkgtreedir/$pkgprefix"
+
+    tmpdir="$pkgtreedir/tmp.$$"
+    [ ! -e "$tmpdir" ] || die "$tmpdir already exists"
+
+    install -d -m 755 "$tmpdir"
+    trap "rm -rf $tmpdir; exit 1" EXIT
+
+    echo '2.0' >"$tmpdir/debian-binary"
+    tar -c -z -f "$tmpdir/control.tar.gz" -C "$pkgcontentdir/CONTROL" .
+    tar -c -z -f "$tmpdir/data.tar.gz" -C "$pkgcontentdir" --exclude CONTROL .
+    tar -c -z -f "$tmpdir/package.tar.gz" -C "$tmpdir" \
+	./debian-binary ./data.tar.gz ./control.tar.gz
+
+    cp "$tmpdir/package.tar.gz" "$pkgstree/$pkgprefix.opk.new"
+    rm -f "$pkgstree/${name}${subpkgsuffix}"_*_"$pkgarch.opk"
+    mv "$pkgstree/$pkgprefix.opk.new" "$pkgstree/$pkgprefix.opk"
+
+    cp "$pkgcontentdir/CONTROL/control" "$pkgstree/$pkgprefix.control.new"
+    rm -f "$pkgstree/${name}${subpkgsuffix}"_*_"$pkgarch.control"
+    mv "$pkgstree/$pkgprefix.control.new" "$pkgstree/$pkgprefix.control"
+
+    pkgsize=$(stat -c '%s' "$pkgstree/$pkgprefix.opk")
+    pkgmd5sum=$(md5sum "$pkgstree/$pkgprefix.opk" | sed -e 's/[ \t].*//')
+    pkgsha256sum=$(sha256sum "$pkgstree/$pkgprefix.opk" | sed -e 's/[ \t].*//')
+    echo "Filename: $pkgprefix.opk" >>"$pkgstree/$pkgprefix.control"
+    echo "Size: $pkgsize" >>"$pkgstree/$pkgprefix.control"
+    echo "MD5sum: $pkgmd5sum" >>"$pkgstree/$pkgprefix.control"
+    echo "SHA256sum: $pkgsha256sum" >>"$pkgstree/$pkgprefix.control"
+
+    rm -rf "$tmpdir"
+    trap - EXIT
+}
+
+_package_fakeroot() {
+    cd "$preinstalldir"
+    log package "$1"
+}
+
+copy_preinstall_tree() {
+    [ "$2" ] || return 0
+    (cd "$preinstalldir"; tar -c -f - --ignore-failed-read \
+	--exclude-vcs --exclude-backups \
+	$(as_tar_excludes $1) $2) \
+	| tar -xv --no-same-owner -f - -C "$pkgcontentdir"
+}
+
+package_license() {
+    ensure_dir "$pkgcontentdir/usr/share/licenses/$name"
+    [ "$license_files" ] \
+	|| die "missing or empty license_files data for $name"
+    if [ "$license_files" = 'aloofix' ]
+    then
+	install -m 644 "$top/COPYING" "$pkgcontentdir/usr/share/licenses/$name"
+    else
+	(cd "$src"; tar -c -f - $license_files) \
+	    | tar -xv --no-same-owner -f - \
+	    -C "$pkgcontentdir/usr/share/licenses/$name"
+    fi
+}
+
+package_doc() {
+    copy_preinstall_tree "$doc_pkg_excludes" "$doc_pkg_files"
+    ensure_dir "$pkgcontentdir/usr/share/doc/$name"
+    [ "$extra_doc_files" ] || return 0
+    ( cd "$src" &&
+	install -m 644 $extra_doc_files \
+	    "$pkgcontentdir/usr/share/doc/$name"
+    )
+}
+
+package_base() {
+    copy_preinstall_tree \
+	"$dev_pkg_files $lib_pkg_files $doc_pkg_files $base_pkg_excludes" \
+	"$base_pkg_files"
+}
+
+subpkg_var() {
+    eval "echo \${${subpkg}_${1}-}" || exit 1
+}
+
+prepend_depend() {
+    local subpkg="$1"
+    local prepend="$2"
+    local dependencies
+
+    dependencies="$(subpkg_var depends)"
+
+    if [ "$dependencies" ]
+    then
+	eval "${subpkg}_depends=\"$prepend $dependencies\""
+    else
+	eval "${subpkg}_depends=\"$prepend\""
+    fi
+}
+
+spaces_to_comma_list() {
+    local depends="$1"
+    depends="${depends//  / }"
+    depends="${depends// /, }"
+    echo "$depends"
+}
+
+add_control_fields() {
+    control_field Package "${name}${subpkgsuffix}"
+    control_field Version "${version}-${sequence}"
+    control_field Architecture "$pkgarch"
+    control_field Source "$site"
+    control_field Maintainer "$maintainer"
+    local tmp_priority="$(subpkg_var license)"
+    [ "$tmp_priority" ] || tmp_priority="$license"
+    control_field License "$tmp_priority"
+    local tmp_priority="$(subpkg_var priority)"
+    [ "$tmp_priority" ] || tmp_priority="$priority"
+    control_field Priority "$tmp_priority"
+    local tmp_section="$(subpkg_var section)"
+    [ "$tmp_section" ] || tmp_section="$section"
+    control_field Section "$tmp_section"
+    control_field Description "$(subpkg_var description)"
+    opt_control_field Depends "$(spaces_to_comma_list "$(subpkg_var depends)")"
+    opt_control_field Conflicts "$(subpkg_var conflicts)"
+    opt_control_field Replaces "$(subpkg_var replaces)"
+    opt_control_field Provides "$(subpkg_var provides)"
+}
+
+package() {
+    pkgtreedir="$pkgtrees/$1"
+    recreate_dir "$pkgtreedir"
+    has_lib_pkg=
+    for subpkg in lib base dev doc license $extra_pkgs
+    do
+	# set up per-package architecture value
+	pkgarch=$arch
+	if [ "$subpkg" = lib -o "$subpkg" = dev ]
+	then
+	    pkgarch=$default_platform_arch
+	elif [ $subpkg = doc -o $subpkg = license ]
+	then
+	    pkgarch=noarch
+	fi
+	local tmp_arch="$(subpkg_var arch)"
+	[ -z "$tmp_arch" ] || pkgarch="$tmp_arch"
+
+	subpkgsuffix=
+	if [ $subpkg != base ]
+	then
+	    subpkgsuffix="-$subpkg"
+	fi
+	pkgprefix="${name}${subpkgsuffix}_${version}-${sequence}_${pkgarch}"
+	pkgcontentdir="$pkgtreedir/$pkgprefix"
+	controlfile="$pkgcontentdir/CONTROL/control"
+
+	recreate_dir "$pkgcontentdir"
+	install -d -m 755 "$pkgcontentdir/CONTROL"
+
+	if [ "$subpkg" != 'license' ]
+	then
+	    prepend_depend "$subpkg" "${name}-license"
+	fi
+	if [ "$subpkg" = "dev" -o "$subpkg" = "base" ]
+	then
+	    if [ "$has_lib_pkg" ]
+	    then
+		prepend_depend "$subpkg" "${name}-lib"
+	    fi
+	fi
+
+	add_control_fields
+
+	if ! run_package_recipe $subpkg
+	then
+	    userwarn "package_$subpkg failed"
+	    return 1
+	fi
+	empty_ok=
+	run_hook "pkg_${subpkg}_hook" || return 1
+
+	# remove_empty_dirs "$pkgcontentdir"
+	# don't package any trees containing no files
+	[ "$empty_ok" -o $(qty_files_in_pkg) -gt 0 ] || continue
+
+	if [ "$subpkg" = "lib" ]
+	then
+	    has_lib_pkg=yes
+	fi
+
+	cd "$top"
+	sh -x $(realpath ./scripts/apply-opkg-hooks) "$pkgcontentdir" \
+	    || die "apply-opkg-hooks failed"
+
+	create_pkg_file
+    done
+}
+
+###############################################################################
+
+sequence_step() {
+    local currpkg="$1"
+    local currop="$2"
+
+    >"$logtree/$currpkg/${currop}.log"
+    "_$currop" "$currpkg" \
+	&& echo "$currop" >"$statusdir/$currpkg" \
+	|| die "$currop operation for $currpkg failed"
+	[ -z "$stop_after" -o "$stop_after" != "$currop" ] || exit 0
+}
+
+sequence() {
+    local currpkg="$1"
+    local prevstage=none
+
+    if [ -f "$statusdir/$currpkg" \
+	-a ! "$specfile" -nt "$statusdir/$currpkg" ]
+    then
+	prevstage="$(cat "$statusdir/$currpkg")"
+    fi
+
+    [ -z "$do_force" ] || prevstage=none
+
+    ensure_dir "$logtree/$currpkg"
+
+    while true
+    do
+	cd "$top"
+	case "$prevstage" in
+	    none)
+		sequence_step "$currpkg" retrieve
+		prevstage=retrieve
+		;;
+	    retrieve)
+		if [ "$checksigs" ]
+		then
+		    sequence_step "$currpkg" checksigs
+		fi
+		prevstage=checksigs
+		;;
+	    checksigs|unpack)
+		# Somewhat subtle logic here. If apply_patches fails,
+		# we want to re-unpack and apply the patches if we
+		# restart build-pkg.
+		sequence_step "$currpkg" unpack
+		sequence_step "$currpkg" apply_patches
+		prevstage=apply_patches
+		;;
+	    apply_patches)
+		sequence_step "$currpkg" configure
+		prevstage=configure
+		;;
+	    configure)
+		sequence_step "$currpkg" build
+		prevstage=build
+		;;
+	    build)
+		sequence_step "$currpkg" preinstall
+		prevstage=preinstall
+		;;
+	    preinstall)
+		sequence_step "$currpkg" package
+		reindex
+		prevstage=package
+		;;
+	    package)
+		return 0
+		;;
+	    *)
+		die "internal error: prevstage is $prevstage" ;;
+	esac
+    done
+}
+
+_retrieve() {
+    status "Retrieving $1 files"
+    ensure_dir "$tarballdir/$1"
+    cd "$tarballdir/$1"
+    # The first file in the urls is considered the primary url for the
+    # package. All other files (e.g. patch files) are considered
+    # secondary files. On package upgrades, we want to remove all
+    # other files in the tarball dir for the package. This will clean
+    # out the tarball directory for the package and ensure the
+    # sha256.sums file doesn't validate against the previous version.
+    first=y
+    for url in $urls
+    do
+	if [ "$first" -a ! -f "$tarballdir/$1/$(basename $url)" ]
+	then
+	    rm -f "$tarballdir/$1"/*
+	fi
+	first=
+	[ ! -f "$tarballdir/$1/$(basename $url)" ] || continue
+	status "  $url"
+	log retrieve "$1"
+    done
+}
+
+_checksigs() {
+    status "Checking signatures"
+    cd "$tarballdir/$1"
+    if [ "$do_newsigs" ]
+    then
+	status "Generating new sigs"
+	newsigs "$1" || die "newsigs failed"
+	exit
+    else
+	log checksigs "$1"
+    fi
+}
+
+_unpack() {
+    status "Unpacking $1 files"
+    recreate_dir "$src"
+    cd "$srctree/$1"
+    log unpack "$1"
+}
+
+_apply_patches() {
+    [ "$patchlist" ] || return 0
+    status "Applying patches to $1"
+    cd "$src"
+    log apply_patches "$1"
+}
+
+_configure() {
+    status "Configuring $1"
+    cd "$src"
+    if [ "$build_dir" ]
+    then
+	recreate_dir "$build_dir"
+	cd "$build_dir"
+    fi
+    log configure "$1"
+}
+
+_build() {
+    status "Building $1"
+    cd "$src"
+    [ -z "$build_dir" ] || cd "$build_dir"
+    [ -z "$build_subdir" ] || cd "$build_subdir"
+    log build "$1"
+}
+
+_preinstall() {
+    status "Preinstalling $1"
+    cd "$src"
+    [ -z "$build_dir" ] || cd "$build_dir"
+    [ -z "$build_subdir" ] || cd "$build_subdir"
+    recreate_dir "$preinstalltree/$1"
+    recreate_dir "$preinstalldir"
+    log preinstall "$1"
+}
+
+_package() {
+    status "Packaging $1"
+    export IN_FAKEROOT=y
+    fakeroot -l /usr/lib/libfakeroot/libfakeroot.so -- \
+	$(realpath $0) --fakeroot "$1" \
+	|| die "failed packaging $1"
+    unset IN_FAKEROOT
+}
+
+reindex() {
+    local prefix
+    local files_to_copy=Packages
+
+    status "Reindexing packages"
+    cd "$pkgstree"
+    for F in *.control
+    do
+	prefix=$(basename "$F" .control)
+	if [ ! -f "$prefix.opk" ]
+	then
+	    userwarn "missing $prefix.opk - skipping"
+	    continue
+	fi
+	files_to_copy="$files_to_copy $prefix.opk"
+	cat $F
+	echo
+	echo
+    done >Packages.$$
+    mv Packages.$$ Packages
+}
+
+###############################################################################
+# default actions for the various build stages
+# these are intended to be overrided as needed for specific build recipes
+
+retrieve() {
+    wget $wget_options -P "$tarballdir/$1" "$url" \
+	|| die "failed retrieving $url"
+}
+
+checksigs() {
+    sha256sum -c "$specdir/sha256.sums" || die "sha256sum failed"
+}
+
+newsigs() {
+    (cd "$tarballdir/$1"
+	ls -1 | grep -v "^pci.ids$" \
+	    | xargs sha256sum >"$specdir/sha256.sums") \
+	    || return 1
+}
+
+unpack() {
+    if [ "$(expr \"$tarfile\" : '.*\(.zip\)$')" ]
+    then
+	unzip -o "$tarballdir/$1/$tarfile" -d "$srctree/$1" || die "unzip failed"
+    else
+	tar -x -C "$srctree/$1" -f "$tarballdir/$1/$tarfile" || "tar failed"
+    fi
+    cd "$src"
+    run_hook unpack_hook || return 1
+}
+
+apply_patches() {
+    for patch in $patchlist
+    do
+	patch -p0 -d "$src" -i "$specdir/$patch.patch" || die "patch $patch failed"
+    done
+}
+
+configure() {
+    "$src/configure" CFLAGS="$cflags" CXXFLAGS="$cflags" \
+	$configure_args $extra_configure_args \
+	|| return 1
+    run_hook configure_hook || return 1
+}
+
+build() {
+    make -j $make_j_qty $make_options $make_targets || return 1
+    run_hook build_hook || return 1
+}
+
+preinstall() {
+    make DESTDIR="$preinstalldir" $install_options $install_target || return 1
+    run_hook preinstall_hook || return 1
+}
+
+###############################################################################
+
+# load specification for the package
+. "$specfile"
+
+preinstalldir="$preinstalltree/$pkg/${name}-$version"
+tarfile=${tarfile:-${name}-${version}.tar.${compression_suffix}}
+
+urls=${urls:-${site}/$tarfile}
+src=${src:-${name}-$version}
+src="$srctree/$name/$src"
+if [ "$use_build_dir" ]
+then
+    build_dir="${src}-build"
+fi
+
+if [ "$do_clean" ]
+then
+    rm -rf "$logtree/$pkg"
+    rm -f "$statusdir/${pkg}"
+    rm -rf "$tarballdir/$pkg"
+    rm -rf "$srctree/$pkg"
+    [ -z "$use_build_dir" ] || rm -rf "$build_dir"
+    rm -rf "$preinstalltree/$pkg"
+    rm -rf "$pkgtrees/$pkg"
+    exit
+fi
+
+###############################################################################
+
+cflags="${cflags:-$c_optim -pipe -march=$arch -f$ssp} $extra_cflags"
+install_target=${install_target:-install-strip}
+default_dev_pkg_files=${default_dev_pkg_files:-"usr/include
+	usr/lib/pkgconfig
+	usr/share/aclocal
+	lib/lib*.a lib/lib*.la
+	usr/lib/lib*.a usr/lib/lib*.la
+	usr/bin/${name}-config"}
+default_lib_pkg_files=${default_lib_pkg_files:="
+	lib/lib*.so lib/lib*.so.*
+	usr/lib/lib*.so usr/lib/lib*.so.*
+"}
+
+base_priority="$priority"
+base_section="$section"
+base_description="$description"
+base_depends="$depends"
+base_builddepends="$builddepends"
+base_conflicts="$conflicts"
+
+lib_priority=${lib_priority:-optional}
+lib_section=${lib_section:-libraries}
+lib_description=${lib_description:-"Shared library files for $name"}
+lib_pkg_files="$default_lib_pkg_files $extra_lib_pkg_files"
+
+dev_priority=${dev_priority:-optional}
+dev_section=${dev_section:-development}
+dev_description=${dev_description:-"Development files for $name"}
+dev_pkg_files="$default_dev_pkg_files $extra_dev_pkg_files"
+
+doc_priority=${doc_priority:-optional}
+doc_section=${doc_section:-documentation}
+doc_description=${doc_description:-"Documentation for $name"}
+doc_sequence=${doc_sequence:-"1"}
+
+license_priority=${license_priority:-important}
+license_section=${license_section:-licenses}
+license_description=${license_description:-"License information for $name"}
+license_sequence=${license_sequence:-"1"}
+
+###############################################################################
+
+if [ "$do_fakeroot" ]
+then
+    _package_fakeroot "$pkg" || exit 1;
+    exit 0
+fi
+
+[ "$do_force" ] || check_builddepends
+
+# This is where the real work is done.
+sequence "$pkg"
+
+exit 0
+
+###############################################################################

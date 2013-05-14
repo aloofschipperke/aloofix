@@ -1,0 +1,14 @@
+#!/bin/ash
+
+case "$1" in
+    start)
+	/bin/hostname -F /etc/hostname
+	/bin/cat /etc/hostname >/proc/sys/kernel/hostname
+	;;
+    *)
+	echo "Usage: $0 {start}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

@@ -1,0 +1,11 @@
+#!/bin/ash
+
+dom=$(date +%d)
+pacct=/var/log/account/pacct
+
+/bin/touch ${pacct}.new
+/bin/chmod 640 ${pacct}.new
+/bin/mv $pacct ${pacct}.$dom
+/bin/mv ${pacct}.new $pacct
+
+exec /etc/init.d/acct restart

@@ -1,0 +1,11 @@
+--- scp.c.prev	2013-04-13 16:29:22.903292131 -0600
++++ scp.c	2013-04-13 16:34:03.290002404 -0600
+@@ -230,7 +230,7 @@
+ 		close(pin[0]);
+ 		close(pout[1]);
+ 
+-#ifdef USE_VFORK
++#ifndef USE_VFORK
+ 		arg_setup(host, remuser, cmd);
+ #endif
+ 

@@ -1,0 +1,14 @@
+#!/bin/ash
+
+case "$1" in
+    start)
+	/bin/mount -n -o remount,rw /
+	/bin/rm -f /fastboot /forcefsck
+	;;
+    *)
+	echo "Usage: $0 {start}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

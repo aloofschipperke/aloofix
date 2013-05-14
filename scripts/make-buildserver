@@ -1,0 +1,93 @@
+#!/bin/sh
+
+# This file is part of the Aloofix project.
+# Copyright (C) 2013 Kevin Johnson <aloof.schipperke@gmail.com>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or (at
+# your option) any later version.
+
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see http://www.gnu.org/licenses/.
+
+# This is a convenience script for building an Aloofix build server.
+
+set -e
+set -u
+
+prelist="pkg-config libtool gettext"
+pkglist="perl bash wget texinfo-dev groff-min cdrtools-mkisofs rsync"
+
+die() { echo "$*" >/dev/tty; exit 1; }
+usage() {
+    echo "usage: $0 [--minimal] [--buildall]" >&2
+    exit 2
+}
+
+args=$(getopt -l help,buildall,minimal '' "$@")
+
+do_buildall=
+do_minimal=
+do_web=
+
+eval set -- "$args"
+for arg
+do
+    case "$arg" in
+	--buildall)
+	    do_buildall=yes
+	    shift ;;
+	--minimal)
+	    do_minimal=yes
+	    shift ;;
+	--help)
+	    usage ;;
+	--)
+	    shift
+	    break ;;
+    esac
+done
+
+[ -f /etc/aloofix-release ] || die "$0 must be run on an Aloofix instance"
+
+if [ "$do_minimal" -a "$do_buildall" ]
+then
+    die "The --minimal and --buildall options are mutually exclusive."
+fi
+
+starttime=$(date)
+
+user=$(id -un)
+[ "$user" = root ] || die "$0 needs to be run as root"
+
+./scripts/magic-install \
+    $prelist \
+    $(./scripts/list-pkg-dependencies --builddepends $pkglist) \
+    $pkglist
+
+if [ -z "$do_minimal" ]
+then
+    allpkgs="$(./scripts/build-pkg --list)"
+    allprereqs=$(./scripts/list-pkg-dependencies --builddepends $allpkgs)
+    ./scripts/magic-install $allprereqs
+
+    if [ "$do_buildall" ]
+    then
+	for P in $allpkgs
+	do
+	    su -c "./scripts/build-pkg $P" build || die "building $P failed"
+	done
+	opkg update
+    fi
+fi
+
+echo Started: $starttime
+echo Finished: $(date)
+
+###############################################################################

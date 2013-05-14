@@ -1,0 +1,192 @@
+#!/bin/sh
+###############################################################################
+# Create an Aloofix initramfs image based on the local machine.
+# Copyright (C) 2011, 2013  Kevin Johnson <aloof.schipperke@gmail.com>
+#
+# This file is part of Aloofix.
+# Aloofix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Aloofix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###############################################################################
+
+USAGE="Usage: $0 [-c configfile] -o cpiofilename"
+
+usage() { echo "$USAGE" >&2; exit 2; }
+warn() { echo "$*" >&2; }
+die() { warn "Error: $*"; exit 1; }
+
+copy_file() {
+    local dirname=$(dirname ".$1")
+    [ -d "$dirname" ] || mkdir -p "$dirname"
+    cp -p "$1" ".$1"
+}
+
+copy_files() {
+    for FILE in $@
+    do
+	[ "${FILE:0:1}" = '/' ] \
+	    || die "$FILE in FILES variable isn't an absolute file name"
+	[ -e "$FILE" ] || die "$FILE doesn't exist"
+	copy_file "$FILE"
+    done
+}
+
+copy_commands() {
+    local cmdfile
+    for cmdname in $@
+    do
+	cmdfile=$(which "$cmdname" || true)
+	[ "$cmdfile" ] || die "command $cmdname not found"
+	[ "${cmdfile:0:1}" = '/' ] || die "$cmdfile isn't an absolute pathname"
+	copy_file "$cmdfile"
+    done
+}
+
+copy_modules() {
+    local etc_mod="$1"
+    shift
+
+    local mod_dir=/lib/modules/${kernelrev}
+    mkdir -p ".$mod_dir"
+    for module in $@
+    do
+	echo "$module" >>"$etc_mod"
+	found=
+	mod_filenames=$(cd $mod_dir && find . -iname "${module}.ko")
+	for mod_filename in $mod_filenames
+	do
+	    found=y
+	    mod_filename=${mod_filename:2}
+	    mod_deps=$(grep "^${mod_filename}:" ${mod_dir}/modules.dep)
+	    mod_deps=${mod_deps#*:}
+	    copy_file "${mod_dir}/${mod_filename}"
+	    for dep in $mod_deps
+	    do
+		copy_file "${mod_dir}/${dep}"
+	    done
+	done
+	[ "$found" ] || die "module $module not found"
+    done
+}
+
+###############################################################################
+
+args=`getopt -o c:o:S: -- "$@"`
+
+[ $? -eq 0 ] ||  usage
+
+configfile=/etc/initramfs.conf
+outfile=
+
+eval set -- "$args"
+while true
+do
+    case "$1" in
+	-c)
+	    configfile=$2; shift 2;;
+	-o)
+	    outfile=$2; shift 2;;
+	--)
+	    shift; break;;
+	*)
+	    die "Internal error!";;
+    esac
+done
+
+[ $# -eq 0 ] || usage
+[ "$outfile" ] || usage
+[ -e "$configfile" ] || die "$configfile doesn't exist"
+[ -f "$configfile" ] || die "$configfile isn't a regular file"
+
+kernelrev=$(uname -r)
+
+MODULES=
+FILES="/lib/libcrypt.so.1
+/lib/libpthread.so.0
+/lib/libm.so.6
+/lib/libc.so.6
+/lib/ld-linux.so.2
+"
+COMMANDS=
+HOOKS=
+
+set -e
+set -u
+
+[ -f "$configfile" ] && . "$configfile"
+
+tempdir=$(mktemp -d /tmp/mkinitramfsXXXXXX)
+[ "$tempdir" ] || die "can't create temp directory"
+trap "rm -rf $tempdir; exit 1" EXIT
+chmod 755 "$tempdir"
+
+owd=$(pwd)
+cd "$tempdir"
+###############################################################################
+# populate root directory tree
+mkdir -p \
+    bin dev etc/modules.d hooks lib mnt/root proc root run sbin sys \
+    usr/bin usr/sbin
+
+mknod -m 0600 dev/console c 5 1
+mknod -m 0666 dev/tty c 5 0
+mknod -m 0666 dev/null c 1 3
+
+cp "$configfile" etc/initramfs.conf
+
+copy_file /etc/mdev.conf
+[ -f /lib/initramfs/bootmsg ] \
+    && cp -p /lib/initramfs/bootmsg etc/bootmsg
+
+copy_file /bin/busybox
+ln -s busybox bin/sh
+ln -s busybox bin/ash
+cp -p /lib/initramfs/init init
+
+copy_file /sbin/e2fsck
+ln sbin/e2fsck sbin/fsck.ext2
+ln sbin/e2fsck sbin/fsck.ext3
+ln sbin/e2fsck sbin/fsck.ext4
+
+copy_modules /etc/modules $MODULES
+copy_commands $COMMANDS
+copy_files $FILES
+
+for HOOK in $HOOKS
+do
+    MODULES=
+    FILES=
+    COMMANDS=
+    populate () { true; }
+
+    if [ -f "/lib/initramfs/hooks/$HOOK" ]
+    then
+	. "/lib/initramfs/hooks/$HOOK"
+	populate
+	cp -p "/lib/initramfs/hooks/$HOOK" "hooks/$HOOK"
+	copy_modules "/etc/modules.d/$HOOK" $MODULES
+	copy_files $FILES
+	copy_commands $COMMANDS
+    fi
+done
+
+depmod -b .
+
+find . | cpio -H newc -o | (cd $owd; gzip -c >"${outfile}")
+
+cd $owd
+
+rm -rf "$tempdir"
+trap - EXIT
+
+###############################################################################
+exit 0

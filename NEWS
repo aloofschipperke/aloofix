@@ -1,0 +1,16 @@
+Changes in 0.9.0
+================
+
+* The Aloofix project has been rebooted. Versions prior to 0.9.0 are
+  no longer supported.
+
+* The Makefile mechanism has been replaced with shell scripts.
+
+* Primary development is done on KVM. Other virtualization platforms,
+  such as VMware, Virtualbox, and UML should work but have not been
+  thoroughly tested on 0.9.0. Patches gleefully accepted.
+
+* Some of the packages available in 0.8.x have been removed. Most will
+  be added back at a later time.
+
+* Version control has been moved from subversion to git.

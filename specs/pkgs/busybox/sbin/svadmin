@@ -1,0 +1,313 @@
+#!/bin/ash
+###############################################################################
+# Wrapper script for high-level management of runsv directories.
+# Copyright (C) 2010,2011  Kevin Johnson <aloof.schipperke@gmail.com>
+#
+# This file is part of Aloofix.
+# Aloofix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Aloofix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###############################################################################
+
+set -e
+
+die() { echo "$@" >&2; exit 1; }
+usage() { echo -e "Error: $@\n$USAGE" >&2; exit 2; }
+
+USAGE="Usage: $0 cmd args*
+Commands:
+	runlevel [runlevel]
+	runlevels [service]
+	list [runlevel]
+        status
+
+	enable service [runlevel]
+	disable service [runlevel]
+
+	add [-d] service [runlevel]
+	remove service [runlevel]
+
+	clone service.segment    (e.g. ifplugd.eth0)
+	unclone service.segment
+
+	install service runscript [logscript]
+	uninstall service
+"
+
+curr_runlevel="$(basename $(readlink -f /var/service))"
+[ -e /var/service ] || die "/var/service doesn't exist"
+[ -L /var/service ] || die "/var/service isn't a symlink"
+[ -e /etc/sv ] || die "/etc/sv doesn't exist"
+[ -d /etc/sv ] || die "/etc/sv isn't a directory"
+
+###############################################################################
+
+assert_runlevel() { [ -d "/etc/sv/$1" ] || die "unknown runlevel: $1"; }
+assert_service() { [ -d "/etc/sv/all/$1" ] || die "unknown service: $1"; }
+assert_not_service() {
+    [ ! -e "/etc/sv/all/$1" ] || die "service $1 already exists";
+}
+
+show_runlevel() { echo "$curr_runlevel"; }
+
+set_runlevel() {
+    runlevel="$1"
+
+    assert_runlevel "$runlevel"
+    ln -fns "../etc/sv/$runlevel" /var/service
+}
+
+get_runlevels() {
+    for runlevel in $(cd /etc/sv && ls -1)
+    do
+	[ -d "/etc/sv/$runlevel" -a "$runlevel" != 'all' ] \
+	    && echo "$runlevel"
+    done
+}
+
+show_runlevels() {
+    for runlevel in $(get_runlevels)
+    do
+	echo $runlevel
+    done
+}
+
+show_service_runlevels() {
+    service="$1"
+
+    for runlevel in $(get_runlevels)
+    do
+	[ "$service" -a ! -d "/etc/sv/$runlevel/$service" ] && continue
+	echo $runlevel
+    done
+}
+
+add_service() {
+    service="$1"
+    runlevel="$2"
+    disable="$3"
+
+    [ "$disable" ] && touch "/etc/sv/all/$service/down"
+
+    ln -ns "../all/$service" "/etc/sv/$runlevel/$service"
+}
+
+remove_service() {
+    service="$1"
+    runlevel="$2"
+
+    rm -f "/etc/sv/$runlevel/$service"
+}
+
+enable_service() {
+    service="$1"
+    runlevel="$2"
+
+    [ -f "/etc/sv/all/$service/down" ] \
+	&& rm -f "/etc/sv/all/$service/down"
+    [ -d "/etc/sv/$runlevel/$service" ] \
+	&& sv up "$service" \
+	|| ln -ns "../all/$service" "/etc/sv/$runlevel/$service"
+}
+
+disable_service() {
+    service="$1"
+    runlevel="$2"
+
+    touch "/etc/sv/all/$service/down"
+    [ "$runlevel" = "$curr_runlevel" ] \
+	&& sv down "$service"
+}
+
+clone_service() {
+    parent="$1"
+    name="$2"
+
+    install -d -m 0755 "/etc/sv/all/$name"
+    ln -ns "../$parent/run" "/etc/sv/all/$name/run"
+    [ -x "/etc/sv/all/$parent/log" ] && {
+	install -d -m 0755 "/etc/sv/all/$name/log"
+	ln -ns "../../$parent/log/run" "/etc/sv/all/$name/log/run"
+    }
+}
+
+unclone_service() {
+    service="$1"
+
+    for runlevel in $(get_runlevels)
+    do
+	remove_service "$service" "$runlevel"
+    done
+    rm -rf "/etc/sv/all/$service"
+}
+
+list_services() {
+    runlevel="$1"
+    cd "/etc/sv/$runlevel"
+    ls -1
+}
+
+status_services() {
+    runlevel="$1"
+
+    [ "$runlevel" = "$curr_runlevel" ] \
+	|| usage "$runlevel is not current runlevel"
+
+    service_list=$(cd "/etc/sv/$curr_runlevel" && ls -1)
+    for service in $service_list
+    do
+	sv status "$service"
+    done
+}
+
+install_service() {
+    service="$1"
+    runscript="$2"
+    logscript="$3"
+
+    install -d -m 0755 "/etc/sv/all/$service"
+    install -m 0755 "$runscript" "/etc/sv/all/$service/run"
+    [ "$logscript" ] && {
+	install -d -m 0755 "/etc/sv/all/$service/log"
+	install -m 0755 "$logscript" "/etc/sv/all/$service/log/run"
+    }
+}
+
+uninstall_service() {
+    service="$1"
+
+    for runlevel in $(get_runlevels)
+    do
+	remove_service "$service" "$runlevel"
+    done
+    rm -rf "/etc/sv/all/$service"
+}
+
+###############################################################################
+
+command="$1"
+shift
+
+case "$command" in
+    runlevel)
+	runlevel="$1"
+	[ "$runlevel" ] \
+	    && set_runlevel "$runlevel" \
+	    || show_runlevel
+	;;
+    runlevels)
+	service="$1"
+	[ -z "$service" ] || assert_service "$service"
+	[ "$service" ] \
+	    && show_service_runlevels "$service" \
+	    || show_runlevels
+	;;
+    add|enable)
+	disable=
+	[ "$1" = "-d" -a $command = 'add' ] && {
+	    disable=y
+	    shift
+	}
+	service="$1"
+	runlevel="$2"
+	[ "$service" ] || usage "missing service"
+	: ${runlevel:=$curr_runlevel}
+	assert_service "$service"
+	assert_runlevel "$runlevel"
+	[ "$runlevel" != 'all' ] || die "can't use 'all' for a runlevel"
+
+	case "$command" in
+	    add)
+		[ ! -d "/etc/sv/$runlevel/$service" ] \
+		    || die "service already exists in $runlevel"
+		add_service "$service" "$runlevel" "$disable" ;;
+	    enable)
+		enable_service "$service" "$runlevel" ;;
+	esac
+	;;
+    remove|disable)
+	service="$1"
+	runlevel="$2"
+	[ "$service" ] || usage "missing service"
+	: ${runlevel:=$curr_runlevel}
+	assert_service "$service"
+	assert_runlevel "$runlevel"
+	[ "$runlevel" != 'all' ] || die "can't use 'all' for a runlevel"
+
+	case "$command" in
+	    remove)
+		remove_service "$service" "$runlevel" ;;
+	    disable)
+		disable_service "$service" "$runlevel" ;;
+	esac
+	;;
+    clone)
+	name="$1"
+	[ "$name" ] || usage "missing clone name"
+	assert_not_service "$name"
+
+	parent=${name%.*}
+	clone=${name##*.}
+	[ "$parent" ] && [ "$clone" ] || usage "invalid parent.segment"
+	assert_service "$parent"
+
+	clone_service "$parent" "$name"
+	;;
+    unclone)
+	service="$1"
+	[ "$service" ] || usage "missing service name"
+	assert_service "$service"
+
+	parent=${service%.*}
+	clone=${service##*.}
+	[ "$parent" ] && [ "$clone" ] || usage "invalid parent.segment"
+	assert_service "$parent"
+
+	unclone_service "$service"
+	;;
+    list|status)
+	runlevel="$1"
+	: ${runlevel:=$curr_runlevel}
+	assert_runlevel "$runlevel"
+
+	case "$command" in
+	    list)
+		list_services "$runlevel" ;;
+	    status)
+		status_services "$runlevel" ;;
+	esac
+	;;
+    install)
+	service="$1"
+	runscript="$2"
+	logscript="$3"
+
+	[ "$service" ] || usage "missing service"
+	[ "$runscript" ] || usage "missing runscript"
+
+	assert_not_service "$service"
+
+	install_service "$service" "$runscript" "$logscript"
+	;;
+    uninstall)
+	service="$1"
+	[ "$service" ] || usage "missing service name"
+	assert_service "$service"
+
+	uninstall_service "$service"
+	;;
+    *)
+	usage "unknown subcommand: $command"
+	;;
+esac
+
+exit 0

@@ -1,0 +1,9 @@
+#!/bin/ash
+
+loglevel=
+
+[ -f /etc/sysconfig/klogd ] && . /etc/sysconfig/klogd
+
+[ -z "$loglevel" ] || args="-c $loglevel"
+
+exec /sbin/klogd -n $args

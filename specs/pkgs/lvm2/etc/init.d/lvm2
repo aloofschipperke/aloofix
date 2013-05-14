@@ -1,0 +1,21 @@
+#!/bin/sh
+
+case "$1" in
+start)
+	[ -x /usr/sbin/dmsetup ] \
+	    && grep -q ' device-mapper' /proc/misc \
+	    || exit 0
+	/usr/sbin/dmsetup mknodes
+	/usr/sbin/vgscan --ignorelockingfailure
+	/usr/sbin/vgchange -a y --ignorelockingfailure
+	;;
+stop)
+	/usr/sbin/vgchange -a n
+	;;
+*)
+	echo "Usage: $0 {start|stop}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

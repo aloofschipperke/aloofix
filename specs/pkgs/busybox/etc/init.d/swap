@@ -1,0 +1,16 @@
+#!/bin/ash
+
+case "$1" in
+    start)
+	/sbin/swapon -a
+	;;
+    stop)
+	/sbin/swapoff -a
+	;;
+    *)
+	echo "Usage: $0 {start|stop}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

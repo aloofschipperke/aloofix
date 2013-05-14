@@ -1,0 +1,503 @@
+Packaging
+=========
+
+This file is part of the Aloofix Project.  You can redistribute the
+file and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation; either version 3
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see http://www.gnu.org/licenses/.
+
+Introduction
+============
+
+This document provides information on packaging in Aloofix.
+
+Aloofix uses `opkg` for package management. It is similar in concept
+to Debian's `apt' application, but has fewer features. This document
+doesn't describe how to use `opkg`, rather how to use the Aloofix
+build kit for compiling and packaging applications in the Aloofix
+environment.
+
+Packages
+========
+
+The primary script for building packages is `build-pkg`, located in
+the script directory. Here is a good initial command to run for
+familiarizing yourself with the command:
+
+    $ ./scripts/build-pkg --list
+
+This lists the packages available in the Aloofix distributions.
+
+Note that this command must be run from the top-level of the Aloofix
+source tree.
+
+Building packages
+-----------------
+
+To build a package, simply execute the following:
+
+    $ ./scripts/build-pkg $pkgname
+
+Where `$pkgname` is the name of the package. As mentioned earlier,
+`build-pkg` must be run from the top level of the Aloofix source tree.
+
+The command reads a specification file located in `pkgspecs/$pkgname`
+and proceeds through the steps needed to retrieve, unpack, configure,
+build, preinstall, and package the application. `build-pkg` will
+output status as it proceeds through the steps. If it is re-run on an
+application already built, or built partially, it will skips steps
+already finished. Assuming no failure, resulting packages will be
+deposited in the `pkgs` subdirectory.
+
+As an example, the following will build the various `user` packages:
+
+    $ ./scripts/build-pkg user
+
+If the command returns immediate without any output, try the following:
+
+    $ ./scripts/build-pkg --force user
+
+This will force regeneration of the package.
+
+To view the results, run the following:
+
+    $ ls -x pkgs/user*.opk
+
+Running this command will show several packages with `user` as a
+prefix, such as `user-web` and `user-build`. These are subpackages of
+the main user package.
+
+### Subpackages
+
+To help minimize the size of deployments, packages are split into
+multiple subpackages.
+
+The primary package is called the *base* package. In most situations,
+users will often need the base package. THe base package doesn't
+include manpages, other documentation, or include files - simply the
+primary files needed for the primary purpose of the application. The
+following subsections description the more common subpackages and how
+they relate to each other and the base package.
+
+#### *-lib
+
+The primary purpose of the lib subpackage is hold any shared library
+files needed for the package. If a lib package exists for an
+application the base package will typically include it in its
+dependency list, so installing the base package will automatically
+include the lib subpackage.
+
+#### *-dev
+
+The primary purpose of a dev subpackage is to provide a way to install
+development files for an application without necessarily installing
+the base application.
+
+The dev subpackage typically includes header files, static archive
+files, and `pkg-config` data. They typically have the corresponding
+lib subpackage as a dependancy, so installing a dev package will also
+install the shared libraries from the lib subpackage.
+
+#### *-doc
+
+The doc subpackage contains any documentation for an application. This
+includes manpages, info files, extra doc files provided by the source
+package, as well as README and similar files from the source. The
+documentation will be located in `/usr/share/doc/$pkgname`, where
+`$pkgname` is the name of the base application.
+
+#### *-license
+
+The license subpackage contains license files from the corresponding
+source packages. This helps comply with terms associated with some
+license agreements and provides users information on the licensing for
+any application installed on the Aloofix packaging system.
+
+All packages have a dependency on the corresponding application
+license package.  Once a license file is installed, the corresponding
+license files will be located in `/usr/share/licenses/$pkgname`, where
+`$pkgname` is the name of the base application.
+
+#### *-min
+
+In some cases base packages contain quite a bit of other files not
+needed for all uses. As an example, the `groff` package has a
+`groff-min` subpackage, intended for use with the `man` command,
+rather than for typesetting.
+
+If a min subpackage exists, the base package typically includes the
+min subpackage as an installation dependency.
+
+Note that most packages do not have a min subpackage, but they are an
+important type of subpackage, given the minimalist nature of Aloofix.
+
+Command-line options
+--------------------
+
+[TODO]
+
+* --create
+* --clean
+* --list
+* --force
+* --stop BUILDSTAGE
+
+[TODO]
+
+Package Server
+--------------
+
+[TODO]
+
+Adding Packages
+---------------
+
+To add a package, execute the following command:
+
+    ./script/build-pkg --create $pkgname
+
+Where `$pkgname` is the name of the package to be added.
+
+This command creates a directory in the `pkgspec` directory and adds a
+`spec.sh` file to the directory. As a general rule, all of the fields
+need values supplied. The primary exceptions are the `builds` and
+`builddepends` fields, which may not need values.
+
+The build script will fail is a required field does not have a
+value. In addition, peruse other application `spec.sh` files for
+examples of how to fill out the values.
+
+### Package specification fields
+
+The following subsections provide some additional information on the
+fields, to help understand appropriate values for each field.
+
+#### name
+
+This field contains the name of the package. In general, please use
+the application name provided by the original author of the
+application, or one used by other distributions. This will improve the
+chances a user will guess the appropriate name when searching through
+`opkg list` output.
+
+#### version
+
+This is the version number for the application.
+
+#### sequence
+
+This is the sequence number for version. This is similar to the
+mechanism used by Debian and others. If the version number doesn't
+change, but some other aspects of the package build changes, the
+sequence number needs to be increased.
+
+#### description
+
+This is a single-line description for the application. This will be
+the string shown when `opkg list` is run.
+
+#### site
+
+This is the url for the source code tarball, minus the trailing
+tarfile name. As an example, if the url is:
+
+    http://www.example.com/files/foo.tar.gz
+
+the `site` value should be set to:
+
+    http://www.example.com/files
+
+#### depends
+
+This field contains a space-seperated string of install-time
+dependencies.
+
+#### builddepends
+
+This field contains a space-seperated string of build-time
+dependencies.
+
+#### section
+
+This field classifies the application into one of several broad
+categories. The following list enumerates some common section values.
+
+* admin
+* core
+* databases
+* devel
+* doctools
+* editors
+* libraries
+* misc
+* networking
+* security
+* web
+
+The section value isn't currently used, but the will probably be used
+for categorizing the packages in subdirectories on a web server at
+some point in the future.
+
+#### license
+
+This field contains a space-separated list of licenses applicable to
+the application. There is not any current logic in build-pkg that uses
+the information, but this will probably be used for license management
+at some point in the future.
+
+Here are some example values appropriate in the field value:
+
+* Apache
+* Apache2.0
+* BSD
+* BSDL
+* CC-by-sa-3.0
+* CDDL.Schily
+* custom
+* GPL
+* GPLv2
+* GPLv2
+* GPLv3
+* LGPL
+* LGPLv2
+* LGPLv2.1
+* LGPLv3
+* MIT
+* MPLv2.0
+* OSLv3
+* PD
+* PerlArtistic
+
+Assume that at some point in the future, a list of recognized licenses
+will be maintained, with all others be considered `custom`.
+
+#### license_files
+
+This field contains a space-separated list of license files, typically
+from the source code repository. These are used to populate the
+contents of the `*-license` package associated with the application.
+
+Please be very careful when specifying this field. Some applications
+require redistribution of licenses with binary packages. The
+`*-license` packages provide compliance with this requirement.
+
+#### extra_doc_files
+
+While some applications do a good job installing documentation during
+the installation phase, some do not. In addition, many times README
+files, contributor lists, and similar are not included when an
+application installs its documentation. This field contains a list of
+extra documentation files to include in the `*-doc` package.
+
+#### extra_pkgs
+
+[TODO]
+
+##### *_description
+
+[TODO]
+
+##### *_pkg_files
+
+[TODO]
+
+### build-pkg steps
+
+[TODO]
+
+#### retrieve
+
+[TODO]
+
+#### unpack
+
+[TODO]
+
+#### apply_patches
+
+[TODO]
+
+#### configure
+
+[TODO]
+
+#### build
+
+[TODO]
+
+#### preinstall
+
+[TODO]
+
+#### package
+
+[TODO]
+
+### Build hooks
+
+[TODO]
+
+#### unpack_hook
+
+[TODO]
+
+#### configure_hook
+
+[TODO]
+
+#### build_hook
+
+[TODO]
+
+#### preinstall_hook
+
+[TODO]
+
+#### pkg_${subpkg}_hook
+
+[TODO]
+
+##### register_alternative
+
+[TODO]
+
+##### register_conffile
+
+[TODO]
+
+##### register_{pre,post}{inst,rm}
+
+[TODO]
+
+##### copy_from_spec
+
+[TODO]
+
+##### pkg_file_mv
+
+[TODO]
+
+### Services and whatnot
+
+[TODO]
+
+#### /etc/init.d/
+
+[TODO]
+
+#### /etc/sv/
+
+[TODO]
+
+#### /etc/sysconfig/
+
+[TODO]
+
+#### cron
+
+[TODO]
+
+#### /etc/modules.d/
+
+[TODO]
+
+#### /etc/profile.d/
+
+[TODO]
+
+### Workflow for adding packages
+
+[TODO]
+
+#### Create package spec
+
+[TODO]
+
+#### Retrieve tarball
+
+[TODO]
+
+#### Generate checksums data
+
+[TODO]
+
+#### Unpack tarball
+
+[TODO]
+
+#### Determine license information
+
+[TODO]
+
+#### Determine configure arguments
+
+[TODO]
+
+#### Verify build and preinstall
+
+[TODO]
+
+#### Configure subpackages
+
+[TODO]
+
+#### Verify subpackages
+
+[TODO]
+
+Upgrading packages
+------------------
+
+[TODO]
+
+Modifying existing packages
+---------------------------
+
+[TODO]
+
+Images
+======
+
+[TODO]
+
+Image Types
+-----------
+
+[TODO]
+
+### ISO Images
+
+[TODO]
+
+### Initrd Images
+
+[TODO]
+
+### tarballs
+
+[TODO]
+
+Command-line options
+--------------------
+
+[TODO]
+
+* --list
+* --create
+
+Adding new image types
+----------------------
+
+[TODO]
+
+Go forth and be aloof.
+
+# Thanks!

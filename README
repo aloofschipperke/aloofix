@@ -1,0 +1,65 @@
+README
+======
+
+Welcome to the Aloofix Distribution Builder - version 0.9.0.
+
+-------------------------------------------------------------------------------
+
+> *NOTE:*
+>	This is a 'beta' release - rough around the edges. Do not
+>	perform a build in an environment not tolerant of mishaps, and
+>	don't even think about running it in production.
+
+> *ANOTHERNOTE:*
+>	Version 0.9 is a resurrection of the Aloofix project. The
+>	build system was completely rewritten between version 0.8 and
+>	0.9. Versions prior to 0.9 are no longer supported.
+
+-------------------------------------------------------------------------------
+
+Aloofix is a minimalist Linux distribution optimized for running in
+virtual machines. It combines requirements from virtual environments
+and the world of embedded computing to provide a basic framework for
+the creation of more sophisticated sets of Aloofix instances.
+
+Aloofix is distributed as a distribution builder, consisting of a set
+of shell scripts used to create Aloofix instances.  A base
+distribution contains busybox, dropbear, e2fsprogs, glibc, linux,
+opkg, syslinux, and zlib. The distribution builder includes a simple
+installer to allow installation from an ISO image to a hard disk
+image, as well as recipes for building additional packages. Expect
+more packages to be added over time.
+
+The primary development is done in KVM, but should run fine in
+Virtualbox, the various VMware products, or User-Mode Linux. Support
+for Xen and EC2 has been started, so expect it to run in those
+environments at some point in the future.
+
+Refer to the INSTALL file for instructions on how to build
+Aloofix. The NEWS file contains high-level information on changes made
+over time. The git logs have details on each and every change. Check
+out the BUGS and TODO.txt files for an indication of shortcominsgs and
+plans.
+
+The Aloofix Distribution Builder is free software: you can
+redistribute it and/or modify it under the terms of the GNU General
+Public License as published by the Free Software Foundation, either
+version 3 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+See the LICENSE file for details on copying, usage, and other
+legal topics.
+
+Aloofix Home page: <http://www.aloofschipperke.com/aloofix>
+Project Page: <http://sourceforge.net/projects/aloofix/>
+
+Feel free to send suggestions, bug reports, and other contributions.
+
+Enjoy,
+
+Kevin Johnson
+<http://www.aloofschipperke.com/>

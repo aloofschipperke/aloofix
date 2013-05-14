@@ -1,0 +1,21 @@
+#!/bin/sh
+
+if [ -d "$HOME/.gnupg" -a -x /usr/bin/gpg-agent ]
+then
+    envfile="$HOME/.gnupg/gpg-agent.env"
+    get_gpg_agent_info() {
+	/bin/fgrep GPG_AGENT_INFO "$1" | /usr/bin/cut -d: -f 2
+    }
+
+    if [ -f "$envfile" ] \
+	&& kill -0 $(get_gpg_agent_info "$envfile") 2>/dev/null
+    then
+	eval "$(cat "$envfile")"
+    else
+	eval "$(gpg-agent --daemon --write-env-file "$envfile")"
+    fi
+    export GPG_AGENT_INFO
+    export GPG_TTY=$(tty)
+    unset envfile
+    unset get_gpg_agent_info
+fi

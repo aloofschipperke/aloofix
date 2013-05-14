@@ -1,0 +1,56 @@
+#!/bin/ash
+
+if [ $# != 0 ]
+then
+    echo "Usage: $0" >&2
+    exit 1
+fi
+
+shm_size=128m
+
+boot_scripts="minmount mdev devpts hwclock console swap fsck remount-root hostname modules sysctl find-cdrom mountall cleanfiles random network"
+
+for boot_script in $boot_scripts
+do
+    [ -x /etc/init.d/$boot_script ] \
+	&& /etc/init.d/$boot_script start \
+	|| echo "$boot_script start failed"
+done
+
+start_scripts=$(ls /etc/init.d/S* 2>/dev/null)
+for F in $start_scripts
+do
+    shortname=$(basename $F | sed -e 's/^.[^\.]*\.//')
+    echo "Starting $shortname"
+    $F start || echo "$shortname start failed"
+done
+
+if [ ! -f /etc/hostid ]
+then
+    default_iface=`/sbin/ip route | awk '/^default via/ {print $(NF)}'`
+    ip_octets=`/sbin/ip addr show $default_iface \
+	| /bin/sed -n -e 's/^ *inet \([^\/ ]*\).*/\1/p' \
+	| /bin/sed -e 's/\./ /g'`
+    hostid=`printf "%x%x%x%x" $ip_octets`
+    [ "$hostid" ] && echo "$hostid" >/etc/hostid
+fi
+
+if [ -f /firstboot ]
+then
+    (
+	for F in $(ls /etc/init.d/firstboot.* 2>/dev/null)
+	do
+	    echo "-> $(basename $F)"
+            $F || {
+		echo "$F failed." >&2
+		fail=y
+	    }
+	done
+	[ ! "$fail" ] && rm -f /firstboot
+    ) 2>&1 | tee /var/log/firstboot
+    [ -s /var/log/firstboot ] || rm /var/log/firstboot
+fi
+
+printf "\nArf!\n"
+
+exit 0

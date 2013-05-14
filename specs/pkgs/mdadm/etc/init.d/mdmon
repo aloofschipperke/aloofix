@@ -1,0 +1,13 @@
+#!/bin/ash
+
+case "$1" in
+start)
+	/sbin/mdmon --takeover --all
+	;;
+*)
+	echo "Usage: $0 {start}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

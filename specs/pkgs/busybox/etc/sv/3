@@ -1,0 +1,21 @@
+#!/bin/ash
+
+exec 2>&1
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
+# reboot returns before actions starts - this next line blanks out the command
+# prompt to reduce potential for confusion
+echo -e -n "\r                                                                              \r"
+
+if cd /var/service
+then
+    SERVICES=`ls -1 | egrep -w -v 'syslogd|klogd'`
+    if [ "$SERVICES" ]
+    then
+	sv -w 196 force-stop $SERVICES
+	sv exit $SERVICES
+    fi
+fi
+
+cd /
+exec /etc/init.d/rcK

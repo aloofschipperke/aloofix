@@ -1,0 +1,106 @@
+#!/bin/ash
+###############################################################################
+# Script to localize an Aloofix installation
+# Copyright (C) 2008-2010, 2013  Kevin Johnson <aloof.schipperke@gmail.com>
+#
+# This file is part of Aloofix.
+# Aloofix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Aloofix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###############################################################################
+
+[ "$root_mount" ] || die "Do not run $0 directly."
+
+for mntdir in "$root_mount" "$boot_mount"
+do
+  /bin/mountpoint -q "$mntdir" || die "$mntdir isn't mounted"
+done
+
+[ "$hostname" ] || {
+    macaddr=`/sbin/ip -oneline addr \
+	    | /bin/grep ' eth0: ' \
+	    | /bin/sed -e 's/^.* link\/ether //' \
+	      -e 's/ .*//' -e 's/://g'`
+
+    hostname="host$macaddr"
+}
+
+echo "$hostname" >"$root_mount/etc/hostname"
+
+# Stuff hostname onto the end of the localhost entry in /etc/hosts.
+hostentry="$hostname.localdomain $hostname localhost"
+/bin/sed -i \
+    -e "s/^\(127.0.0.1[ \t]\).*$/\\1$hostentry/" \
+    "$root_mount/etc/hosts"
+
+/bin/ln -s dhcp "$root_mount/etc/ifplugd/ifplugd.eth0"
+for F in ifplugd.eth0 klogd syslogd dropbear ntpd crond acpid-bb
+do
+    /bin/ln -s "../all/$F" "$root_mount/etc/sv/default"
+done
+echo '::respawn:-/sbin/getty 115200 console' >>"$root_mount/etc/inittab"
+echo 'tty2::respawn:-/sbin/getty 115200 tty2' >>"$root_mount/etc/inittab"
+
+if [ -f "$root_mount/etc/init.d/firstboot.rootpw" ]
+then
+    /bin/mv "$root_mount/etc/init.d/firstboot.rootpw" \
+	"$root_mount/etc/init.d/no.firstboot.rootpw"
+fi
+while ! /usr/sbin/chroot "$root_mount" /usr/bin/passwd root >/dev/tty
+do
+    true
+done
+
+boot_menu_file="$boot_mount/extlinux/extlinux.conf"
+
+# tweak the root device in the boot menu file
+/bin/sed -i -e "s@/dev/hda3@$rootdev@g" "$boot_menu_file"
+
+# tweak filesystem types in fstab and the boot menu file
+/bin/sed -i -e "/LABEL=BOOT/s/ext2/$bootfstype/" "$root_mount/etc/fstab"
+/bin/sed -i -e "/LABEL=ROOT/s/ext4/$fstype/" "$root_mount/etc/fstab"
+/bin/sed -i -e "s/rootfstype=ext4/rootfstype=$fstype/" "$boot_menu_file"
+
+if [ -f "$root_mount/etc/initramfs.conf" ]
+then
+    sed -i -e 's/^# HOOKS=.*/HOOKS=""/' "$root_mount/etc/initramfs.conf"
+
+    if [ "$do_mdadm" ]
+    then
+	mdadm --detail --scan >"$root_mount/etc/mdadm.conf"
+	sed -i -e '/^boot_scripts=/s/ swap / mdmon swap /' \
+	    "$root_mount/etc/init.d/rcS"
+	sed -i -e 's/HOOKS="\(.*\)"/HOOKS="\1 mdadm"/' \
+	    "$root_mount/etc/initramfs.conf"
+	/bin/ln -s ../all/mdadm "$root_mount/etc/sv/default"
+    fi
+
+    if [ "$do_lvm" ]
+    then
+	sed -i -e '/^boot_scripts=/s/ swap / lvm2 swap /' \
+	    "$root_mount/etc/init.d/rcS"
+	sed -i -e 's/HOOKS="\(.*\)"/HOOKS="\1 lvm2"/' \
+	    "$root_mount/etc/initramfs.conf"
+    fi
+    # clean up extra leading whitespace (e.g. HOOKS=" lvm2")
+    sed -i -e 's/HOOKS=" /HOOKS="/' "$root_mount/etc/initramfs.conf"
+
+fi
+
+/bin/touch "$root_mount/firstboot"
+
+if [ "$do_initramfs" ]
+then
+    echo "--> building initramfs" >&2
+    chroot "$root_mount" /sbin/mkinitramfs -o /boot/initramfs.gz
+    echo "initrd /initramfs.gz" >>"$boot_menu_file"
+fi

@@ -1,0 +1,100 @@
+#!/bin/ash
+
+export PATH='/sbin:/usr/sbin:/bin:/usr/bin'
+init=/sbin/init
+root=/dev/hda3
+HOOKS=
+[ -f /etc/initramfs.conf ] && . /etc/initramfs.conf
+
+warn() { echo "Warning: $*" >&2; }
+
+fail_to_shell() {
+    echo "Failed $*. Dropping into a shell." >&2
+    exec /bin/sh
+}
+
+###############################################################################
+/bin/busybox mount -t proc none /proc
+/bin/busybox mount -t sysfs none /sys
+/bin/busybox mount -t tmpfs none /run -o size=16M
+
+findfs_arg=
+rootfstype=auto
+
+for arg in $(/bin/busybox cat /proc/cmdline)
+do
+    case "$arg" in
+	root=*)
+	    # root=LABEL=ROOT
+	    # type=LABEL
+	    # value=ROOT
+	    root="${arg#*=}"
+	    type="${root%%=*}"
+	    if [ "$type" = 'LABEL' -o "$type" = "UUID" ]
+	    then
+		value=${root#*=}
+		findfs_arg="${type}=${value}"
+	    fi
+	    ;;
+	init=*) init="${arg#*=}";;
+	initrd=*) initrd="${arg#*=}";;
+	rootfstype=*) rootfstype="${arg#*=}";;
+    esac
+done
+
+echo "Booting Aloofix initramfs /boot$initrd"
+
+/bin/busybox --install -s
+ln -s ../proc/mounts etc/mtab
+echo /sbin/mdev >/proc/sys/kernel/hotplug
+/sbin/mdev -s
+
+hwclock --hctosys
+
+for MODULE in /etc/modules /etc/modules.d/*
+do
+    [ -f "$F" ] || continue
+    /bin/grep '^[^#]' "$F" | while read MODULE
+    do
+	/sbin/modprobe $MODULE || fail_to_shell "loading $MODULE module"
+    done
+done
+
+for HOOK in $HOOKS
+do
+    run_hook () { true; }
+
+    if [ -f "/hooks/$HOOK" ]
+    then
+	. "/hooks/$HOOK" || fail_to_shell "loading $HOOK hook"
+	run_hook || fail_to_shell "running $HOOK hook"
+    else
+	warn "skipping $HOOK - hook file not found"
+    fi
+done
+
+[ -f /etc/bootmsg ] && cat /etc/bootmsg
+
+if [ "$shell" = 'y' ]
+then
+    echo "Starting temporary shell in early user space."
+    echo "/ filesystem is not mounted."
+    setsid cttyhack /bin/sh
+fi
+
+if [ "$findfs_arg" ]
+then
+    root=$(/sbin/findfs "${type}=${value}")
+fi
+mount -t "$rootfstype" -o ro ${root} /mnt/root \
+    || fail_to_shell "mounting ${root} to /mnt/root"
+
+# setsid cttyhack /bin/sh
+
+umount /proc
+umount /sys
+
+echo "Switching to root filesystem on ${root} with ${init}"
+exec switch_root /mnt/root ${init}
+fail_to_shell "running switch_root /mnt/root ${init}"
+###############################################################################

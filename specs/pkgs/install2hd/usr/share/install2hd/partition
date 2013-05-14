@@ -1,0 +1,89 @@
+#!/bin/ash
+###############################################################################
+# Script to partition a hard drive for Aloofix.
+# Copyright (C) 2008-2010, 2013  Kevin Johnson <aloof.schipperke@gmail.com>
+#
+# This file is part of Aloofix.
+# Aloofix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Aloofix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###############################################################################
+
+[ "$hd_dev" ] || die "Do not run $0 directly."
+
+mountcount=0
+swapcount=0
+for device in $hd_dev
+do
+    mountcount=$(($mountcount + $(/bin/mount | /bin/grep -c "^$device"))) || :
+    swapcount=$(($swapcount + $(/bin/grep -c "^$device" </proc/swaps))) || :
+done
+[ $mountcount -eq 0 ] || die "Error: mounted filesystems on $hd_dev"
+[ $swapcount -eq 0 ] || die "Error: attached swap space on $hd_dev"
+
+###############################################################################
+# echo checking for existing partitions
+###############################################################################
+
+for device in $hd_dev
+do
+    partcount=$(/sbin/fdisk -l "$device" | grep "^$device" | wc -l)
+
+    [ "$partcount" -eq 0 ] || {
+	[ "$force_fdisk" ] || die "Partitions already exist on $device"
+	for P in 4 3 2 1
+	do
+	    printf "d\n%d\nw" $P | /sbin/fdisk "$device"
+	    [ $? -eq 0 ] || die "deleting $device partition $P failed"
+	done
+    }
+done
+
+###############################################################################
+# echo creating partitions
+###############################################################################
+
+for device in $hd_dev
+do
+    printf "n\np\n%d\n\n%s
+n\np\n%d\n\n%s
+n\np\n%d\n\n%s
+t\n%d\n%s
+t\n%d\n%s
+t\n%d\n%s
+a\n%d
+w
+"   1 +${part1size}M \
+    2 +${part2size}M \
+    3 '' \
+    1 83 \
+    2 82 \
+    3 83 \
+    1 \
+    | fdisk "$device"
+done
+
+###############################################################################
+
+export bootdev=
+export swapdev=
+export rootdev=
+for device in $hd_dev
+do
+    bootdev="$bootdev ${device}1"
+    swapdev="$swapdev ${device}2"
+    rootdev="$rootdev ${device}3"
+done
+bootdev="${bootdev# }"
+bootdev="${bootdev%% *}"
+swapdev="${swapdev# }"
+rootdev="${rootdev# }"

@@ -1,0 +1,24 @@
+#!/bin/sh
+
+pacct_dir=/var/log/account
+
+case "$1" in
+    start)
+	[ -d $pacct_dir ] || mkdir -p $pacct_dir || exit 1
+	touch $pacct_dir/pacct || exit 1
+	chmod 0640 $pacct_dir/pacct || exit 1
+	/usr/sbin/accton $pacct_dir/pacct
+	;;
+    stop)
+	/usr/sbin/accton off
+	;;
+    restart)
+	$0 stop && $0 start
+	;;
+    *)
+	echo "Usage: $0 {start|stop|restart}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

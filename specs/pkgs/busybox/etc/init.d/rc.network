@@ -1,0 +1,29 @@
+#!/bin/ash
+
+# add_bridge br0
+# add_bridge_iface br0 eth0
+# /sbin/udhcpc --now -S -i br0
+
+# del_bridge_iface br0 eth0
+# del_bridge br0
+
+add_bridge() {
+    /usr/sbin/brctl addbr $1
+    /usr/sbin/brctl setfd $1 2
+    /usr/sbin/brctl sethello $1 2
+    /usr/sbin/brctl stp $1 0
+    /sbin/ifconfig $1 up
+}
+
+del_bridge() { /usr/sbin/brctl delbr $1; }
+
+add_bridge_iface() {
+    /sbin/ifconfig $2 down
+    /usr/sbin/brctl addif $1 $2
+    /sbin/ifconfig $2 up
+}
+
+del_bridge_iface() {
+    /sbin/ifconfig $2 down
+    /usr/sbin/brctl delif $1 $2
+}

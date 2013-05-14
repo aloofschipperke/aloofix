@@ -1,0 +1,16 @@
+#!/bin/ash
+
+event_handler=/usr/lib/mdadm/event-handler
+mailto=
+increment=
+
+[ -f /etc/sysconfig/mdadm ] && . /etc/sysconfig/mdadm
+
+notify_mode="--program $event_handler"
+increment_mode=
+
+[ -z "$mailto" ] || notify_mode="--mail $mailto"
+[ -z "$increment" ] || increment_mode="--increment $increment"
+
+exec /sbin/mdadm --monitor --scan --no-sharing --syslog \
+    $increment_mode $notify_mode

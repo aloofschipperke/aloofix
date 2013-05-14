@@ -1,0 +1,2 @@
+#s_type	n_type	s_code		n_code	value	description
+EV_KEY	0x01	KEY_POWER	116	1	button/power PWRF 00000080

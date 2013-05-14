@@ -1,0 +1,13 @@
+#!/bin/ash
+
+exec 2>&1
+
+service=$(basename "$PWD")
+
+# e.g. ifplugd.eth0
+interface=${service:$(expr index "$service" .)}
+args=
+
+[ -f "/etc/sysconfig/$service" ] && . "/etc/sysconfig/$service"
+
+exec /usr/sbin/ifplugd -n -i "$interface" $args

@@ -1,0 +1,15 @@
+#!/bin/ash
+
+GATEWAY_IFACES=eth0
+
+[ -f /etc/sysconfig/gateway ] && . /etc/sysconfig/gateway
+
+for IFACE in $GATEWAY_IFACES
+do
+    [ $IFACE = lo ] && continue
+    [ -d /sys/class/net/$IFACE ] || continue
+    echo $IFACE
+    break
+done
+
+exit 0

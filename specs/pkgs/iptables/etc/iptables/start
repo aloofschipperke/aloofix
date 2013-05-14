@@ -1,0 +1,177 @@
+#!/bin/sh
+###############################################################################
+# Basic iptables-based firewall configuration for Aloofix.
+# Copyright (C) 2010,2013  Kevin Johnson <aloof.schipperke@gmail.com>
+#
+# This file is part of Aloofix.
+# Aloofix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Aloofix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###############################################################################
+
+ICMP_RATE_LIMIT=2/second
+ICMP_BURST=2
+RST_RATE=2/second
+RST_BURST=2
+LOG_RATE_LIMIT=5/minute
+
+[ -f /etc/sysconfig/iptables ] && . /etc/sysconfig/iptables
+
+###############################################################################
+ip6tables -A INPUT -m rt --rt-type 0 --rt-segsleft 0 -j DROP
+ip6tables -A OUTPUT -m rt --rt-type 0 --rt-segsleft 0 -j DROP
+ip6tables -A FORWARD -m rt --rt-type 0 --rt-segsleft 0 -j DROP
+iptables -A INPUT -m state --state INVALID -j DROP
+iptables -A OUTPUT -m state --state INVALID -j DROP
+iptables -A FORWARD -m state --state INVALID -j DROP
+ip6tables -A INPUT -m state --state INVALID -j DROP
+ip6tables -A OUTPUT -m state --state INVALID -j DROP
+ip6tables -A FORWARD -m state --state INVALID -j DROP
+
+###############################################################################
+# ICMPv4
+###############################################################################
+
+iptables -N icmp-in
+iptables -A INPUT -p icmp -j icmp-in
+iptables -A icmp-in -p icmp -m icmp --icmp-type address-mask-request -j DROP
+iptables -A icmp-in -p icmp -m icmp --icmp-type timestamp-request -j DROP
+
+###############################################################################
+# ICMPv6
+###############################################################################
+
+# Allow some ICMPv6 types in the INPUT chain
+for type in \
+    destination-unreachable \
+    packet-too-big \
+    parameter-problem \
+    time-exceeded
+do
+    ip6tables -A INPUT -p icmpv6 --icmpv6-type "$type" -j ACCEPT
+done
+
+# Rate limit echo-request and echo-reply
+for type in \
+    echo-reply \
+    echo-request
+do
+    ip6tables -A INPUT \
+	-p icmpv6 --icmpv6-type "$type" \
+	-m limit --limit 900/min \
+	-j ACCEPT
+    ip6tables -A INPUT -p icmpv6 --icmpv6-type "$type" -j REJECT
+    ip6tables -A OUTPUT \
+	-p icmpv6 --icmpv6-type "$type" \
+	-m limit --limit 900/min \
+	-j ACCEPT
+    ip6tables -A OUTPUT -p icmpv6 --icmpv6-type "$type" -j REJECT
+done
+
+# Allow others ICMPv6 types if the hop limit field is 255.
+for type in \
+    neighbor-advertisement \
+    neighbor-solicitation \
+    redirect \
+    router-advertisement
+do
+    ip6tables -A INPUT \
+	-p icmpv6 --icmpv6-type "$type" \
+	-m hl --hl-eq 255 \
+	-j ACCEPT
+done
+
+# When there isn't a match, the default policy (DROP) will be applied.
+# To be sure, drop all other ICMPv6 types.
+# We're dropping enough icmpv6 types to break RFC compliance.
+
+ip6tables -A INPUT -p icmpv6 -m limit --limit "$LOG_RATE_LIMIT" \
+    -j LOG --log-prefix "ICMPv6 denied"
+ip6tables -A INPUT -p icmpv6 -j DROP
+
+# Allow ICMPv6 types that should be sent through the Internet.
+for type in \
+    destination-unreachable \
+    packet-too-big \
+    parameter-problem \
+    time-exceeded
+do
+    ip6tables -A OUTPUT -p icmpv6 --icmpv6-type "$type" -j ACCEPT
+done
+
+# Limit most NDP messages to the local network.
+for type in \
+    neighbour-advertisement \
+    neighbour-solicitation \
+    router-solicitation
+do
+    ip6tables -A OUTPUT -p icmpv6 --icmpv6-type "$type" \
+			-m hl --hl-eq 255 -j ACCEPT
+done
+
+ip6tables -A OUTPUT -p icmpv6 --icmpv6-type router-advertisement \
+    -m limit --limit "$LOG_RATE_LIMIT" \
+    -j LOG --log-prefix "ICMPv6 ra"
+ip6tables -A OUTPUT -p icmpv6 --icmpv6-type router-advertisement -j REJECT
+ip6tables -A OUTPUT -p icmpv6 --icmpv6-type redirect \
+    -m limit --limit "$LOG_RATE_LIMIT" \
+    -j LOG --log-prefix "ICMPv6 redirect"
+ip6tables -A OUTPUT -p icmpv6 --icmpv6-type redirect -j REJECT
+
+ip6tables -A OUTPUT -p icmpv6 -j ACCEPT
+
+###############################################################################
+# pace inbound RSTs to resist RST attacks
+iptables -A INPUT -p tcp -m tcp --tcp-flags RST RST \
+    -m limit --limit "$RST_RATE" --limit-burst "$RST_BURST" -j ACCEPT
+iptables -A INPUT -p tcp -m tcp --tcp-flags RST RST -j DROP
+
+###############################################################################
+# process interface-specific settings
+
+iptables -A INPUT -i lo -j ACCEPT
+ip6tables -A INPUT -s ::1 -d ::1 -j ACCEPT
+
+iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+ip6tables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+for interface in $(ls -1d /sys/class/net/*)
+do
+    interface=$(basename $interface)
+    if [ -x /etc/iptables/$interface ]
+    then
+	if [ "$interface" != lo ]
+	then
+	    iptables -N ${interface}-in
+	    iptables -A INPUT -i $interface -j ${interface}-in
+	fi
+	iptables -A icmp-in \
+	    -p icmp -i $interface \
+	    --icmp-type echo-request \
+	    -m limit --limit "$ICMP_RATE_LIMIT" --limit-burst "$ICMP_BURST" \
+	    -j ACCEPT
+	/etc/iptables/$interface $interface
+    fi
+done
+
+###############################################################################
+# drop ipv4 broadcast
+iptables -A INPUT -d 255.255.255.255/0.0.0.255 -j DROP
+# drop ipv4 multicast
+iptables -A INPUT -d 224.0.0.0/4 -j DROP
+
+iptables -A INPUT -m limit --limit "$LOG_RATE_LIMIT" \
+    -j LOG --log-prefix "ipv4 denied: "
+ip6tables -A INPUT -m limit --limit "$LOG_RATE_LIMIT" \
+    -j LOG --log-prefix "ipv6 denied: "
+
+###############################################################################

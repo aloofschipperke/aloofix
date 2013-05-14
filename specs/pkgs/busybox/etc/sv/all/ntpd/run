@@ -1,0 +1,24 @@
+#!/bin/ash
+
+exec 2>&1
+
+/usr/bin/sv up syslogd
+
+# 0.aloofix.pool.ntp.org is in the pool, but libbb thinks it's a 'bad address'
+ntpservers="
+	1.aloofix.pool.ntp.org
+	2.aloofix.pool.ntp.org
+	3.aloofix.pool.ntp.org
+"
+enable_server=
+
+[ -f /etc/sysconfig/ntpd ] && . /etc/sysconfig/ntpd
+
+args=
+[ -z "$enable_server" ] || args="$args -l"
+for ntpserver in $ntpservers
+do
+    args="$args -p $ntpserver"
+done
+
+exec /usr/sbin/ntpd -n $args

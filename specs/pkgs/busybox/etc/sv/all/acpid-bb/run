@@ -1,0 +1,5 @@
+#!/bin/ash
+
+exec 2>&1
+
+exec /sbin/acpid -d

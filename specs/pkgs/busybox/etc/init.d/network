@@ -1,0 +1,20 @@
+#!/bin/ash
+
+[ -f /etc/init.d/rc.network ] && . /etc/init.d/rc.network
+
+case "$1" in
+    start)
+	[ -r /etc/mactab ] && /sbin/nameif
+	/sbin/ifconfig lo 127.0.0.1
+	/sbin/ip route add 127.0.0.0/8 dev lo
+	;;
+    stop)
+	/sbin/ifconfig lo down
+	;;
+    *)
+	echo "Usage: $0 {start,stop}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

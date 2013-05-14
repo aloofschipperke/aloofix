@@ -1,0 +1,53 @@
+Installation
+============
+
+Please refer to the `README` file for an overview of Aloofix.
+Please see the `LICENSE` file for details on copying and usage.
+
+-------------------------------------------------------------------------------
+> *WARNING:*
+>	This is a beta release. Do not perform a build in an environment
+>	not tolerant of mishaps, and don't even think about running it
+>	in production.
+
+-------------------------------------------------------------------------------
+
+Aloofix is distributed as a build kit in source form. While a package
+manager for binary packages is provided, Aloofix is not currently
+distributed in source form and an initial bootstrapping (or
+buildstrapping) procedure is required to create an environment capable
+of creating binary packages.
+
+This initial buildstrapping procedure proceeds in stages. An initial
+build is done on a non-Aloofix system. This builds an installation
+ISO, which is used to install a minimal Aloofix distro and toolchain
+to a hard drive. This first instance is used to create a second
+installation CD built from Aloofix which is then again installed on a
+VM hard drive.  Once done with the initial installation, you will have
+a running Aloofix instance which can be used as an Aloofix build
+server and package server.
+
+The document `docs/buildstrapping.txt` contains step by step
+instructions for completing the initial buildstrapping procedure.
+
+The buildstrapping procedure compiles each of the packages needed for
+the final instance. The overall buildstraping process takes
+approximately an hour using a 4-core KVM guest with 256MB of RAM on a
+2.3GHz Intel i7-3610QM system. The buildstrapping procedure thankfully
+only needs to be once. There should be no need to do it against once
+the initial Aloofix instance has been created. Also, building all
+packages once the buildstrap environment is done will take
+approximately 1.5 hours on the previously mentioned VM.
+
+The buildstrapping procedure is evolving with each release. Expect it
+to improve over time. Things are still a bit rough around the
+edges. Check out the `TODO` file for an indication of shortcomings and
+plans.
+
+Aloofix Home page: <http://www.aloofschipperke.com/aloofix.html>
+Development Home Page: <http://sourceforge.net/projects/aloofix/>
+
+Enjoy,
+
+Kevin Johnson
+<http://www.aloofschipperke.com/>

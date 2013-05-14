@@ -1,0 +1,3 @@
+#!/bin/ash
+
+exec /bin/nice -n 19 /bin/ionice -c 2 -n 7 /usr/bin/updatedb

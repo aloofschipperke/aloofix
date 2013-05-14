@@ -1,0 +1,45 @@
+#!/bin/ash
+###############################################################################
+# Script to install Aloofix packages on the hard drive.
+# Copyright (C) 2008-2010, 2013  Kevin Johnson <aloof.schipperke@gmail.com>
+#
+# This file is part of Aloofix.
+# Aloofix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Aloofix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###############################################################################
+
+[ "$root_mount" ] || die "Do not run $0 directly."
+
+for mntdir in "$root_mount" "$boot_mount"
+do
+  /bin/mountpoint -q "$mntdir" || die "$mntdir isn't mounted"
+done
+
+(
+    cd "$root_mount"
+    mkdir -p usr/lib/opkg
+    opkfiles=$(cat "$cdrom_mount/pkgs/base.list")
+    (cd "$cdrom_mount/pkgs"
+	/usr/bin/opkg -V 0 -d root -o "$root_mount" install $opkfiles \
+	    || die "Failed installing packages.")
+    /bin/ln -s busybox bin/sh
+    for F in usr/lib/opkg/info/*.postinst
+    do
+	/usr/sbin/chroot . /bin/sh "/$F" || echo chroot for "$F" failed >&2
+    done
+)
+
+/usr/sbin/chroot "$root_mount" /sbin/ldconfig
+/bin/mount -t proc none "$root_mount/proc"
+/usr/sbin/chroot "$root_mount" /sbin/depmod
+/bin/umount "$root_mount/proc"

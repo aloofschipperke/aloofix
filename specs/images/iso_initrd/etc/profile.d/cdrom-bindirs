@@ -1,0 +1,1 @@
+export PATH="$PATH:/mnt/cdrom/bin:/mnt/cdrom/sbin"

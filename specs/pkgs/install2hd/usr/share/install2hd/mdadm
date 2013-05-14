@@ -1,0 +1,80 @@
+#!/bin/ash
+###############################################################################
+# Script to configure mdadm for the root filesystem on Aloofix.
+# Copyright (C) 2011, 2013  Kevin Johnson <aloof.schipperke@gmail.com>
+#
+# This file is part of Aloofix.
+# Aloofix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Aloofix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###############################################################################
+
+[ -x /sbin/mdadm ] || die "mdadm not installed on this iso image"
+[ "$hd_dev" ] || die "Do not run $0 directly."
+
+###############################################################################
+# echo initializing mdadm
+###############################################################################
+
+depmod
+modprobe raid1
+
+for N in 0 1 2
+do
+    [ -b /dev/md${N} ] || continue
+    [ "$force_md0" ] || die "md${N} is already active"
+    mdadm --stop /dev/md${N}
+done
+
+###############################################################################
+# echo setting mdadm partition type
+###############################################################################
+
+for device in $hd_dev
+do
+    printf "t\n%d\n%s
+t\n%d\n%s
+w
+"   2 fd \
+    3 fd \
+    | fdisk $device
+done
+
+###############################################################################
+# echo creating raid array
+###############################################################################
+
+qty_disks=0
+for disk in $hd_dev
+do
+    qty_disks=$(($qty_disks + 1))
+done
+
+[ $qty_disks -lt 3 ] \
+    || die "Only 1-2 disks are currently supported for RAID installation"
+[ $qty_disks -gt 1 ] || {
+    # bootdev="$bootdev missing"
+    # swapdev="$swapdev missing"
+    rootdev="$rootdev missing"
+}
+
+# mdadm --create /dev/md0 \
+#     --level=1 --raid-devices=2 $bootdev
+# bootdev=/dev/md0
+
+# mdadm --create /dev/md1 \
+#     --level=1 --raid-devices=2 $swapdev
+# swapdev=/dev/md1
+
+mdadm --create /dev/md0 \
+    --level=1 --raid-devices=2 $rootdev
+rootdev=/dev/md0

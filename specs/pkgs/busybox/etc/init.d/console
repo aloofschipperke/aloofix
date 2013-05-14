@@ -1,0 +1,24 @@
+#!/bin/ash
+
+beepfreq=880
+beepdur=20
+
+[ -f /etc/sysconfig/console ] && . /etc/sysconfig/console
+
+case "$1" in
+    start)
+    	[ -c /dev/tty1 ] && {
+	    echo -ne '\033[?17;0;63c' >/dev/tty1
+	    echo -ne "\033[10;${beepfreq}]\033[11;${beepdur}]" >/dev/tty1
+	}
+	for N in `seq 2 63`; do
+	    [ -c /dev/tty$N ] && echo -n -e '\033[?17;8;96c' >/dev/tty$N
+	done
+	;;
+    *)
+	echo "Usage: $0 {start}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

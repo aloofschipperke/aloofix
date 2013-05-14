@@ -1,0 +1,13 @@
+#!/bin/sh
+
+case "$1" in
+start)
+	/usr/lib/sa/sadc -F -L -
+	;;
+*)
+	echo "Usage: $0 {start}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

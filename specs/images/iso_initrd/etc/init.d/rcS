@@ -1,0 +1,16 @@
+#!/bin/ash
+
+/bin/busybox --install -s
+
+bootscripts="minmount mdev devpts hwclock remount-root hostname modules sysctl find-cdrom mountall"
+
+for bootscript in $bootscripts
+do
+    [ -x /etc/init.d/$bootscript ] && /etc/init.d/$bootscript start
+done
+
+/bin/dmesg >/var/log/boot.log
+
+/sbin/ifconfig lo 127.0.0.1
+/sbin/ip route add 127.0.0.0/8 dev lo
+/sbin/udhcpc --now

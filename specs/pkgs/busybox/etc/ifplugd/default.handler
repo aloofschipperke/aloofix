@@ -1,0 +1,53 @@
+#!/bin/ash
+
+HOSTNAME=`hostname`
+
+[ -f /etc/network/$1 ] && . /etc/network/$1
+
+if [ "$IPADDR" ]
+then
+    [ "$NETMASK" ] || eval `/bin/ipcalc -m $IPADDR`
+    [ "$PREFIX" ] || eval `/bin/ipcalc -p $IPADDR $NETMASK`
+    [ "$BROADCAST" ] || eval `/bin/ipcalc -b $IPADDR $NETMASK`
+    METRIC=0
+else
+    # no ip addr means use dhcp
+    :
+fi
+
+case "$2" in
+    up)
+	DHCPDEV=$1
+	if [ "$BRIDGE" ]
+	then
+	    /sbin/ip link set dev $1 down || exit 1
+	    /sbin/ip addr flush dev $1 || exit 1
+	    /usr/sbin/brctl addif $DHCPDEV $1 || exit 1
+	    DHCPDEV=$BRIDGE
+	fi
+	/sbin/ip link set dev $1 up || exit 1
+	if [ "$IPADDR" ]
+	then
+	    /sbin/ip addr add $IPADDR/$PREFIX brd $BROADCAST dev $1 || exit 1
+	    [ -z "$GATEWAY" ] \
+		|| /sbin/route add default gw $GATEWAY dev $1 metric $METRIC \
+		|| exit 1
+	else
+	    /sbin/udhcpc --now -q -S -h "$HOSTNAME" -i $BRIDGE || exit 1
+	fi
+	;;
+    down)
+	if [ "$IPADDR" ]
+	then
+	    [ -z "$GATEWAY" ] \
+		|| route del default gw $GATEWAY dev $1
+	    /sbin/ip addr del $IPADDR/$PREFIX brd $BROADCAST dev $1 || exit 1
+	fi
+	/sbin/ip link set dev $1 down || exit 1
+	[ -z "$BRIDGE" ] \
+	    || /usr/sbin/brctl delif $BRIDGE $1 \
+	    || exit 1
+	;;
+esac
+
+exit 0

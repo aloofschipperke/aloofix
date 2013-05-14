@@ -1,0 +1,17 @@
+#!/bin/ash
+
+rotation_mb=10240
+rotation_count=10
+loghost=
+
+[ -f /etc/sysconfig/syslogd ] && . /etc/sysconfig/syslogd
+
+args=
+
+[ -z "$rotation_mb" ] || args="$args -s $rotation_mb"
+[ -z "$rotation_count" ] || args="$args -b $rotation_count"
+[ -z "$loghost" ] || args="$args -R $loghost"
+
+[ -e /var/service/klogd ] && /usr/bin/sv up klogd
+
+exec /sbin/syslogd -n $args

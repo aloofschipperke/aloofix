@@ -1,0 +1,20 @@
+The following are known bugs and notable features gaps in the current
+version of Aloofix;
+
+- It's not thoroughly tested. Adding 'make check' is in process, as is
+  checking ABIs.
+
+- Checking digital signatures of downloaded tarballs is not yet
+  implemented.
+
+- The root account uses /bin/ash for the shell. Do not change this to
+  another shell. Issues with poweroff and reboot have been found when
+  using /bin/bash as the root shell.
+
+- The documentation is somewhat lean.
+
+- The license tag mechanism isn't finished. Corrections to the license
+  tags are gleefully accepted.
+
+- The disk initialization portion of the installation script is
+  horribly naive.

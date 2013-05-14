@@ -1,0 +1,7 @@
+#!/bin/ash
+
+answer=nobody
+
+[ -f /etc/sysconfig/fakeidentd ] && . /etc/sysconfig/fakeidentd
+
+exec /usr/sbin/fakeidentd -f "$answer"

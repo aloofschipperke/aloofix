@@ -1,0 +1,21 @@
+#!/bin/ash
+
+exec 2>&1
+
+sv up syslogd
+
+conffile=/etc/udhcpd.conf
+
+[ -f /etc/sysconfig/udhcpd ] && . /etc/sysconfig/udhcpd
+
+if [ ! -r "$conffile" ]
+then
+    logger -t udhcpd "conffile $conffile not found - downing service"
+    sv down .
+    exit 1
+fi
+
+[ -d /var/lib/misc ] || mkdir -p /var/lib/misc
+touch /var/lib/misc/udhcpd.leases
+
+exec /usr/sbin/udhcpd -f "$conffile"

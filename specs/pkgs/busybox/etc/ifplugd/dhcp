@@ -1,0 +1,15 @@
+#!/bin/ash
+
+HOSTNAME=`hostname`
+
+case "$2" in
+    up)
+	/sbin/ifconfig $1 up
+	exec /sbin/udhcpc --now -q -S -h "$HOSTNAME" -i $1
+	;;
+    down)
+	exec /sbin/ifconfig $1 down
+	;;
+esac
+
+exit 0

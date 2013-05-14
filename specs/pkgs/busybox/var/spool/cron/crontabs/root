@@ -1,0 +1,5 @@
+0 * * * *	/usr/sbin/run-crons
+59 * * * *	rm -f /var/spool/cron/lastrun/cron.hourly
+59 2 * * *	rm -f /var/spool/cron/lastrun/cron.daily
+59 2 * * 6	rm -f /var/spool/cron/lastrun/cron.weekly
+59 2 1 * *	rm -f /var/spool/cron/lastrun/cron.monthly

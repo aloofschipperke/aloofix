@@ -1,0 +1,21 @@
+#!/bin/ash
+
+[ -f /etc/network/$1 ] && . /etc/network/$1
+
+[ "$IPADDR" ] || exit 1
+[ "$NETMASK" ] || eval `/bin/ipcalc -m $IPADDR`
+[ "$PREFIX" ] || eval `/bin/ipcalc -p $IPADDR $NETMASK`
+[ "$BROADCAST" ] || eval `/bin/ipcalc -b $IPADDR $NETMASK`
+
+case "$2" in
+    up)
+	/sbin/ip link set dev $1 up || exit 1
+	/sbin/ip addr add $IPADDR/$PREFIX brd $BROADCAST dev $1
+	;;
+    down)
+	/sbin/ip addr del $IPADDR/$PREFIX brd $BROADCAST dev $1 || exit 1
+	/sbin/ip link set dev $1 down
+	;;
+esac
+
+exit 0

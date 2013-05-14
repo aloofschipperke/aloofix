@@ -1,0 +1,8 @@
+# name	uidgid	home		shell		gecos
+man	20	/var/cache/man	/bin/sh		Man
+mail	21	/var/spool/mail	/bin/false	Email
+dns	23	/nohome		/bin/false	DNS
+web	24	/srv/www	/bin/false	Web
+distcc	100	/nohome		/bin/false	DistCC
+sudo	101	-		-		-
+build	999	/home/build	/bin/sh		Build

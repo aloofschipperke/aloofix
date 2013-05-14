@@ -1,0 +1,50 @@
+#!/bin/ash
+
+if [ $# != 0 ]
+then
+    echo "Usage: $0" >&2
+    exit 1
+fi
+
+# reboot returns before actions starts - this next line blanks out the command
+# prompt to reduce potential for confusion
+echo -e -n "\r                                                            \r"
+
+kill_scripts=$(ls /etc/init.d/K* 2>/dev/null)
+for F in $kill_scripts
+do
+    shortname=$(basename $F | sed -e 's/^.[^\.]*\.//')
+    echo "Stopping $shortname"
+    $F stop || echo "$shortname stop failed"
+done
+
+stop_scripts="random hwclock"
+for F in $stop_scripts
+do
+    [ -x /etc/init.d/$F ] && /etc/init.d/$F stop || echo "$F stop failed"
+done
+
+/bin/sync &
+echo "Terminating processes"
+/usr/sbin/killall5 -TERM
+/bin/sleep 2
+echo "Killing processes"
+/usr/sbin/killall5 -KILL
+/bin/sleep 1
+/bin/sync
+/bin/sleep 1
+
+# This has to be done before 'mountall stop', since we need /sys.
+kexec_loaded="$(cat /sys/kernel/kexec_loaded)"
+
+/etc/init.d/swap stop
+/etc/init.d/mountall stop
+
+if [ -x /sbin/kexec -a "$kexec_loaded" = 1 ]
+then
+    # clear the console and the scrollback buffer
+    echo -en "\e[1;1H\e[3J" >/dev/console
+    exec kexec -e
+fi
+
+exit 0

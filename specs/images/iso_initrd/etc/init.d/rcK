@@ -1,0 +1,9 @@
+#!/bin/ash
+
+echo -e -n "\r                                                            \r"
+
+/etc/init.d/hwclock stop
+/sbin/swapoff -a
+/bin/umount -a -r
+
+exit 0

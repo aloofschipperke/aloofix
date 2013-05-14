@@ -1,0 +1,62 @@
+#!/bin/sh
+
+# This file is part of the Aloofix project.
+# Copyright (C) 2010,2013 Kevin Johnson <kjj@aloofschipperke.com>
+# Distributed under the terms of the GNU General Public License version 3,
+# or (at your option) any later version.
+
+log() { logger -p daemon.notice -t firewall "$@ on $0"; }
+
+_tcp_ports_in() {
+    local cmd="$1"
+    shift;
+    local destports=$(echo "$@" | tr -s ' ' ',')
+
+    [ "$destports" ] || {
+	log tcp_ports_in missing destports
+	return
+    }
+
+    "$cmd" -A "${interface}-in" \
+	-p tcp \
+	-m state --state NEW \
+	-m multiport --dports "$destports" \
+	-j ACCEPT
+}
+
+ipv4_tcp_ports_in() { _tcp_ports_in iptables "$@"; }
+ipv6_tcp_ports_in() { _tcp_ports_in ip6tables "$@"; }
+
+ipv4_throttle_tcp_ports_in() {
+    local persec="$1"
+    shift
+    : ${persec:=4}
+    local hitcount=$(($persec + 1))
+    local destports=$(echo "$@" | tr -s ' ' ',')
+
+    [ "$destports" ] || {
+	log throttle_tcp_ports_in missing destports
+	return;
+    }
+
+    local interface_chain="${interface}-in"
+    iptables -A $interface_chain \
+	-p tcp \
+	-m multiport --dports "$destports" \
+	-m recent --name ports-in --rcheck --seconds 1 --hitcount "$hitcount" \
+	-m limit --limit 12/minute --limit-burst 5 \
+	-j LOG
+    iptables -A $interface_chain \
+	-p tcp \
+	-m multiport --dports "$destports" \
+	-m recent --name ports-in --update --seconds 1 --hitcount "$hitcount" \
+	-j DROP
+    iptables -A $interface_chain \
+	-p tcp \
+	-m state --state NEW \
+	-m multiport --dports "$destports" \
+	-m recent --name ports-in --set \
+	-j ACCEPT
+}
+
+###############################################################################

@@ -1,0 +1,18 @@
+#!/bin/ash
+
+user=web
+group=web
+webroot=/srv/www
+
+exec 2>&1
+
+gateway=`timeout -t 5 -s 9 \
+    netstat -nr 2>/dev/null \
+    | awk '$4 == "UG" {print $2}'`
+[ ! -z "$gateway" ] || exit 1
+
+sv up syslogd
+
+[ -d "$webroot" ] || /bin/mkdir -p "$webroot"
+
+exec /usr/sbin/httpd -f -vv -u "$user:$group" -h "$webroot"

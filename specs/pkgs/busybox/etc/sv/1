@@ -1,0 +1,5 @@
+#!/bin/ash
+
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
+exec /etc/init.d/rcS

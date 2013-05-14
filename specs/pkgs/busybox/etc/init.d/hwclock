@@ -1,0 +1,27 @@
+#!/bin/ash
+
+hwclock_zone="-u"
+has_hwclock=1
+
+if /bin/grep -q "^model name.*: UML$" /proc/cpuinfo
+then
+    has_hwclock=
+fi
+
+[ -f /etc/sysconfig/hwclock ] && . /etc/sysconfig/hwclock
+
+case "$1" in
+    start)
+	echo "Hardware clock: $(/sbin/hwclock $hwclock_zone)"
+	[ -z "$has_hwclock" ] || /sbin/hwclock --hctosys $hwclock_zone
+	;;
+    stop)
+	[ -z "$has_hwclock" ] || /sbin/hwclock --systohc $hwclock_zone
+	;;
+    *)
+	echo "Usage: $0 {start|stop}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

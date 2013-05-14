@@ -1,0 +1,26 @@
+#!/bin/ash
+
+case "$1" in
+    start)
+	for block_dev in `cd /sys/block; echo [sh]d?`
+	do
+	    [ -f /sys/block/$block_dev/device/media ] \
+		|| continue
+	    /bin/grep -q '^cdrom$' /sys/block/$block_dev/device/media \
+		|| continue
+	    /bin/ln -s $block_dev /dev/cdrom
+	    break
+	done
+	if [ ! -e /dev/cdrom -a -e /dev/ubdc ] && \
+	    /bin/grep -q '^model name.*: UML$' /proc/cpuinfo
+	then
+	    /bin/ln -s ubdc /dev/cdrom
+	fi
+	;;
+    *)
+	echo "Usage: $0 {start}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

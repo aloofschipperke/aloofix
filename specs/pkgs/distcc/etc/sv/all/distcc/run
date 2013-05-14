@@ -1,0 +1,32 @@
+#!/bin/ash
+
+opts=
+
+allow=
+user=distcc
+loglevel=notice
+qty_jobs=
+niceness=
+listen=
+port=
+job_lifetime=
+stats_port=
+
+[ -f /etc/sysconfig/distcc ] && . /etc/sysconfig/distcc
+
+[ ! -z "$allow" ] || allow=127.0.0.1
+[ ! -z "$user" ] || user=distcc
+[ ! -z "$loglevel" ] || loglevel=notice
+[ -z "$niceness" ] || opts="$opts -N $niceness"
+[ -z "$listen" ] || opts="$opts --listen $listen"
+[ -z "$port" ] || opts="$opts -p $port"
+[ -z "$qty_jobs" ] || opts="$opts -j $qty_jobs"
+[ -z "$job_lifetime" ] || opts="$opts --job-lifetime $job_lifetime"
+[ -z "$stats_port" ] || opts="$opts --stats --stats-port $stats_port"
+
+exec /usr/bin/distccd \
+    --no-detach --daemon \
+    --user "$user" \
+    --allow "$allow" \
+    --log-level "$loglevel" \
+    $opts

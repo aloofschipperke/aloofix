@@ -1,0 +1,48 @@
+#!/bin/ash
+###############################################################################
+# Script to select disk target(s) for Aloofix installation.
+# Copyright (C) 2011, 2013  Kevin Johnson <aloof.schipperke@gmail.com>
+#
+# This file is part of Aloofix.
+# Aloofix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Aloofix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###############################################################################
+
+[ "$disk_query_list" ] || die "Do not run $0 directly."
+
+###############################################################################
+# echo "selecting disk(s)"
+###############################################################################
+
+candidate_disks=
+candidate_qty=0
+
+# probe for candidate disks
+for device in $(ls -1 $disk_query_list 2>/dev/null)
+do
+    [ "$device" != '/dev/hdc' ] || continue
+    [ -b "$device" ] || continue
+    candidate_qty=$(($candidate_qty + 1))
+    candidate_disks="$candidate_disks $device"
+done
+candidate_disks="${candidate_disks# }"
+
+[ $candidate_qty -gt 0 ] || die "No candidate disks found."
+
+[ "$hd_dev" ] || {
+    [ $candidate_qty -eq 1 ] || \
+	die "Multiple hddev candidates: $candidate_disks
+Use --hddev option to select installation target."
+
+    hd_dev="$candidate_disks"
+}

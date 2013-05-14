@@ -1,0 +1,42 @@
+#!/bin/sh
+
+banner_file=
+motd=y
+allow_root=
+allow_passwords=y
+allow_root_passwords=
+
+rsa_hostkey_file=/etc/dropbear/dropbear_rsa_host_key
+dss_hostkey_file=/etc/dropbear/dropbear_dss_host_key
+
+down_dropbear() {
+    logger -t dropbear "key generation for $1 failed - downing service"
+    sv down .
+    exit 1
+}
+
+[ -f /etc/dropbear/dropbear_rsa_host_key ] \
+    || /usr/bin/dropbearkey -t rsa -s 2048 -f $rsa_hostkey_file \
+    || down_dropbear rsa
+[ -f /etc/dropbear/dropbear_dss_host_key ] \
+    || /usr/bin/dropbearkey -t dss -f $dss_hostkey_file \
+    || down_dropbear dss
+
+sv up syslogd
+
+gateway=`timeout -t 5 -s 9 \
+    netstat -nr 2>/dev/null \
+    | awk '$4 == "UG" {print $2}'`
+[ ! -z "$gateway" ] || exit 1
+
+[ -f /etc/sysconfig/dropbear ] && . /etc/sysconfig/dropbear
+
+args=
+
+[ "$banner_file" ] && args="$args -b $banner_file"
+[ "$motd" ] || args="$args -m"
+[ "$allow_root" ] || args="$args -w"
+[ "$allow_passwords" ] || args="$args -s"
+[ -z "$allow_root" -a "$allow_root_passwords" ] && args="$args -g"
+
+exec /usr/bin/dropbear -F $args

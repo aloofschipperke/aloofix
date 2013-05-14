@@ -1,0 +1,5 @@
+*~
+/build/
+/images/
+/pkgs/
+/.build.lock

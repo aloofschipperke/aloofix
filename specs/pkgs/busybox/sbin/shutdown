@@ -1,0 +1,102 @@
+#!/bin/ash
+###############################################################################
+# Wrapper script for halt and reboot functionality.
+# Copyright (C) 2010,2013  Kevin Johnson <aloof.schipperke@gmail.com>
+#
+# This file is part of Aloofix.
+# Aloofix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Aloofix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###############################################################################
+
+die() { echo "$@" >&2; exit 1; }
+usage() { echo "$@" >&2; exit 2; }
+
+[ "`id -un`" = root ] || die "you must be root to do that!"
+
+mode=halt
+halt_cmd=/sbin/poweroff
+fastboot=
+forcefsck=
+
+USAGE="Usage: $0 [-rh] [-fFHPa] [time]"
+args=`/bin/getopt -o fFhHrPa -- "$@"`
+[ $? = 0 ] || usage "$USAGE"
+eval set -- "$args"
+while true
+do
+    case "$1" in
+	-r)	mode=reboot; shift;;
+	-h)	mode=halt; shift;;
+	-H)	halt_cmd=/sbin/halt; shift;;
+	-P)	halt_cmd=/sbin/poweroff; shift;;
+	-f)	fastboot=y; shift;;
+	-F)	forcefsck=y; shift;;
+	-q)	shift;;
+	--)	shift; break;;
+	*)	die "internal getopt error";;
+    esac
+done
+
+[ $# -lt 2 ] || usage "$USAGE"
+
+# decode time argument
+case "$1" in
+    +*)		delay_minutes=${1:1}
+		[ "$delay_minutes" ] || usage "$USAGE"
+		[ "$delay_minutes" -ge 0 ] 2>/dev/null || usage "$USAGE"
+		delay=$(($delay_minutes * 60))
+		;;
+    now)	delay=0;;
+    ?:?? | ??:??)
+		time=`/bin/date -d "$1" +%s 2>/dev/null`
+		[ "$time" ] || usage "invalid time value: $1"
+		now=`/bin/date +%s`
+		delay=$(($time - $now))
+		[ $delay -ge 0 ] || usage "can't handle tomorrow or the past"
+		;;
+    '')		delay=120;;
+    *)		usage "invalid time value: $1";;
+esac
+
+echo "System going down in $delay seconds"
+
+# split the delay into two pieces - pre and post creation of /etc/nologin
+# by default /etc/nologin is created 5 minutes prior to shutdown
+nologin_delay=300
+if [ $delay -ge $nologin_delay ]
+then
+    delay=$(($delay - $nologin_delay))
+else
+    nologin_delay=$delay
+    delay=0
+fi
+
+/bin/sleep $delay
+
+trapcmds="exit 1;"
+[ ! -f /etc/nologin ] && trapcmds="/bin/rm -f /etc/nologin; $trapcmds"
+trap "$trapcmds" HUP INT QUIT TERM
+echo "The system is being shut down in 5 minutes for maintenance.
+Login is currently disabled." >/etc/nologin
+
+/bin/sleep $nologin_delay
+
+trap - HUP INT QUIT TERM
+
+[ "$fastboot" ] && >/fastboot
+[ "$forcefsck" ] && >/forcefsck
+
+[ "$mode" = reboot ] && exec /sbin/reboot
+[ "$mode" = halt ] && exec $halt_cmd
+
+die "internal error - unknown mode: $mode"

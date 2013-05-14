@@ -1,0 +1,21 @@
+#!/bin/ash
+
+case "$1" in
+    start)
+	/bin/rm -f /etc/nologin
+	/bin/rm -f /nokexec
+	/usr/bin/find /var/run -type f -print0 \
+	    | /usr/bin/xargs -0 -r /bin/rm -f
+	for f in /var/run/utmp /var/log/wtmp
+	do
+	    /bin/touch $f
+	    /bin/chmod 0644 $f
+	done
+	;;
+    *)
+	echo "Usage: $0 {start}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

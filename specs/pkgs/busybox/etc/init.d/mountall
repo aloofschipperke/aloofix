@@ -1,0 +1,16 @@
+#!/bin/ash
+
+case "$1" in
+    start)
+	/bin/mount -a
+	;;
+    stop)
+	/bin/umount -a -r
+	;;
+    *)
+	echo "Usage: $0 {start,stop}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

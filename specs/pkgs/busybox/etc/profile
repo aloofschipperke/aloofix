@@ -1,0 +1,10 @@
+export EDITOR=/bin/vi
+export VISUAL=/bin/vi
+export PATH='/sbin:/usr/sbin:/bin:/usr/bin'
+export PS1="\u@\h:\w\\$ "
+export LS_COLORS=
+
+for F in /etc/profile.d/*
+do
+    [ -x "$F" ] && . "$F"
+done

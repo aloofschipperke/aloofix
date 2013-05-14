@@ -1,0 +1,165 @@
+#!/bin/sh
+
+# This file is part of the Aloofix project.
+# Copyright (C) 2008-2010, 2013 Kevin Johnson <aloof.schipperke@gmail.com>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or (at
+# your option) any later version.
+
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see http://www.gnu.org/licenses/.
+
+if [ $# -ne 1 ]
+then
+    echo "Usage: $0 $pkgcontentdir" >&2
+    exit 2
+fi
+
+pkgcontentdir="$1"
+
+CONTROL="$pkgcontentdir/CONTROL"
+
+set -e
+set -u
+
+###############################################################################
+# various functions to make the code easier to read
+
+append_line() { echo "$1" >>"$2"; }
+prepend_line() {
+    # sed needs a file to exist and contain at least one newline
+    [ -e "$2" ] || echo '' >>"$2"
+    sed -i -e "1i\\$1" "$2"
+}
+
+list_init_services() {
+    [ -d "$1/etc/init.d" ] || return 0
+    (cd "$1/etc/init.d" &&
+	ls -1d [a-z]* 2>/dev/null \
+	| grep -v '^rc\.' | grep -v '^rc[SK]$'
+    )
+}
+
+list_sv_services() {
+    [ -d "$1/etc/sv/all" ] || return 0
+    (cd "$1/etc/sv/all" &&
+	ls -1d [a-z]* 2>/dev/null
+    )
+}
+
+list_info_files() {
+    [ -d "$1/usr/share/info" ] || return 0
+    (cd "$1/usr/share/info" && 
+	ls -1 2>/dev/null \
+	    | grep -v '^dir$' | egrep -v -- '-[0-9]+$'
+    )
+}
+
+add_service_control() {
+    type=$1
+    shift;
+
+    for service in "$@"
+    do
+	prepend_line "restart_${type}_service $service" "$CONTROL/postinst"
+	prepend_line "stop_${type}_service $service" "$CONTROL/prerm"
+    done
+}
+
+qty_libfiles() {
+    if [ ! -d "$pkgcontentdir/lib" -a ! -d "$pkgcontentdir/usr/lib" ]
+    then
+	echo 0
+	return 0
+    fi
+    (
+	# these are separate commands so we can avoid striping off the dir path
+	ls -1 "$pkgcontentdir"/lib/lib*.so* 2>/dev/null
+	ls -1 "$pkgcontentdir"/usr/lib/lib*.so* 2>/dev/null
+    ) | wc -l
+}
+
+qty_kernel_modules() {
+    if [ ! -d "$pkgcontentdir/lib/modules" ]
+    then
+	echo 0
+    else
+	find "$pkgcontentdir"/lib/modules -name '*.ko' 2>/dev/null | wc -l
+    fi
+}
+
+###############################################################################
+
+# delete shebang if it exists - we'll add it later
+
+for F in preinst prerm postinst postrm
+do
+    [ -f "$CONTROL/$F" ] || continue
+    head -1 "$CONTROL/$F" | grep -q '^#!' || continue
+    sed -i -e '1d' "$CONTROL/$F"
+done
+
+#-----------------------------------------------------------------------------
+
+# add ldconfig if libraries are being installed
+
+if [ $(qty_libfiles) -gt 0 ]
+then
+    prepend_line register_libraries "$CONTROL/postinst"
+    append_line register_libraries "$CONTROL/postrm"
+fi
+
+#-----------------------------------------------------------------------------
+
+# add depmod -a if kernel modules are being installed
+
+if [ $(qty_kernel_modules) -gt 0 ]
+then
+    prepend_line register_modules "$CONTROL/postinst"
+    append_line register_modules "$CONTROL/postrm"
+fi
+
+#-----------------------------------------------------------------------------
+
+# add service start/stop logic if package has any boot/service scripts
+
+add_service_control init $(list_init_services "$pkgcontentdir")
+add_service_control sv $(list_sv_services "$pkgcontentdir")
+
+#-----------------------------------------------------------------------------
+
+# add manpage and/or info indexing logic if package has manpages or info files
+
+if [ -d "$pkgcontentdir/usr/share/man" ]
+then
+    append_line add_manpages "$CONTROL/postinst"
+    append_line remove_manpages "$CONTROL/postrm"
+fi
+
+for infofile in $(list_info_files "$pkgcontentdir")
+do
+    append_line "add_texinfo $infofile" "$CONTROL/postinst"
+    append_line "remove_texinfo $infofile" "$CONTROL/prerm"
+done
+
+#-----------------------------------------------------------------------------
+# ensure shebang and execution permissions
+
+for F in preinst prerm postinst postrm
+do
+    [ -f "$CONTROL/$F" ] || continue
+    # opkg-hooks.sh contains function definitions
+    # to make reading and writing {pre,post}{inst,rm} files easier
+    prepend_line '. /usr/share/aloofix/opkg-hooks.sh' "$CONTROL/$F"
+    prepend_line '#!/bin/sh -e' "$CONTROL/$F"
+    chmod +x "$CONTROL/$F"
+done
+
+exit 0

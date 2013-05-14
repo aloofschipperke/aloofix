@@ -1,0 +1,32 @@
+#!/bin/ash
+###############################################################################
+# Script to install a bootloader on a hard drive for Aloofix.
+# Copyright (C) 2008-2010, 2013  Kevin Johnson <aloof.schipperke@gmail.com>
+#
+# This file is part of Aloofix.
+# Aloofix is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Aloofix is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###############################################################################
+
+[ "$cdrom_mount" ] || die "Do not run $0 directly."
+
+for device in $hd_dev
+do
+    /bin/cat "$cdrom_mount/boot/isolinux/mbr.bin" >"$device"
+done
+
+raid_opt=
+[ "$do_mdadm" ] && raid_opt="--raid"
+/sbin/extlinux $raid_opt --install "$boot_mount/extlinux"
+[ "$do_mdadm" ] && /sbin/extlinux --clear-once "$boot_mount/extlinux"
+true

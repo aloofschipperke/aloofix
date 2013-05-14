@@ -1,0 +1,21 @@
+#!/bin/ash
+
+sv up syslogd
+
+loglevel=8
+
+[ -f /etc/sysconfig/crond ] && . /etc/sysconfig/crond
+
+crondir=/var/spool/cron/crontabs
+[ -d "$crondir" ] || /bin/mkdir -p "$crondir"
+
+if [ ! -d /var/spool/cron/lastrun ]
+then
+    mkdir -p /var/spool/cron/lastrun
+    touch /var/spool/cron/lastrun/cron.hourly
+    touch /var/spool/cron/lastrun/cron.daily
+    touch /var/spool/cron/lastrun/cron.weekly
+    touch /var/spool/cron/lastrun/cron.monthly
+fi
+
+exec /usr/sbin/crond -f -d "$loglevel" -c $crondir

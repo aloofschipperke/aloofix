@@ -1,0 +1,14 @@
+#!/bin/ash
+
+case "$1" in
+    start)
+	[ -d /dev/pts ] || mkdir /dev/pts
+	/bin/mount -t devpts -o newinstance -o ptmxmode=0644 devpts /dev/pts
+	;;
+    *)
+	echo "Usage: $0 {start}" >&2
+	exit 1
+	;;
+esac
+
+exit 0

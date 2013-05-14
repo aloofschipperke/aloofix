@@ -1,0 +1,43 @@
+#!/bin/ash
+
+if [ -z "$cmd" ]
+then
+    echo "missing configuration settings for daemon boot script"
+    exit 1
+fi
+
+ssd_args="-x $cmd"
+[ "$start_as" ] && ssd_args="$ssd_args -a $start_as"
+[ "$pidfile" ] && ssd_args="$ssd_args -p $pidfile"
+[ "$cmd_args" ] && cmd_args="-- $cmd_args"
+
+daemon_running() { start-stop-daemon -K -t -q $ssd_args $cmd_args; }
+start_daemon() { start-stop-daemon -S $ssd_args "$@" $cmd_args; }
+
+stop_daemon() {
+    if ! daemon_running
+    then
+	echo "daemon $cmd is not running" >&2
+	return 1
+    fi
+    start-stop-daemon -K -q $ssd_args $cmd_args
+}
+
+restart_daemon() {
+    if daemon_running 
+    then
+	$0 stop && exec $0 start
+    else
+	exec $0 start
+    fi
+}
+
+daemon_status() {
+    if ! daemon_running
+    then
+	echo "$cmd is not running"
+	return 1
+    fi
+    echo "$cmd is running"
+    return 0
+}
