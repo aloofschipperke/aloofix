@@ -88,6 +88,13 @@ separate package creation from scripts/build-pkg
 
 add ability to have download mirrors
 
+improve support for initial build on other distros
+    debian pkgs: build-essential uuid-dev gawk zlib1g-dev libmpc-dev xorriso
+    remove // parameter substitutions
+    variable for mkisofs so deb can use xorrisofs
+    need to reference built lib and include dirs
+    builds needs to reference built libs/headers instead of the build server's
+
 ===============================================================================
 Image TODOs:
 
