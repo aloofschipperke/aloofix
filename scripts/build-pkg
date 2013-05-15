@@ -211,9 +211,11 @@ control_field() {
 opt_control_field() { [ -z "$2" ] || control_field "$1" "$2"; }
 
 log() {
-    (date +"%s %c"; set -x; "$1" "$2"; date +"%s %c") \
+    date +"%s %c" >>"$logtree/$2/$1.log"
+    (set -x; "$1" "$2") \
 	>>"$logtree/$2/$1.log" 2>&1 \
 	|| die "$1" failed
+    date +"%s %c" >>"$logtree/$2/$1.log"
 }
 
 function_defined() { type "$1" >/dev/null 2>&1; }
@@ -380,10 +382,7 @@ prepend_depend() {
 }
 
 spaces_to_comma_list() {
-    local depends="$1"
-    depends="${depends//  / }"
-    depends="${depends// /, }"
-    echo "$depends"
+    echo "$(echo "$1" | sed -e 's/ \+/, /g')"
 }
 
 add_control_fields() {
@@ -636,8 +635,7 @@ _preinstall() {
 _package() {
     status "Packaging $1"
     export IN_FAKEROOT=y
-    fakeroot -l /usr/lib/libfakeroot/libfakeroot.so -- \
-	$(realpath $0) --fakeroot "$1" \
+    fakeroot -- $(realpath $0) --fakeroot "$1" \
 	|| die "failed packaging $1"
     unset IN_FAKEROOT
 }
