@@ -19,11 +19,12 @@ Introduction
 ------------
 
 The buildstrap procedure is the way an initial Aloofix instance is
-created.  The procedure is a bit of a dodge. Rather than building a
-cross-platform build environment or a chroot isolated environment, an
-initial instance is built on a different Linux distribution (currently
-ArchLinux). This instance contains the core Aloofix packages and the
-minimum toolchain packages Aloofix needs to build itself.
+created.  The procedure is a bit of a dodge (actually, it's a large
+dodge). Rather than building a cross-platform build environment or a
+chroot isolated environment, an initial instance is built on a
+different Linux distribution (currently ArchLinux). This instance
+contains the core Aloofix packages and the minimum toolchain packages
+Aloofix needs to build itself.
 
 The major steps are as follows:
 
