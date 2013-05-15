@@ -4,7 +4,7 @@
 # or (at your option) any later version.
 
 name=subversion
-version=1.7.8
+version=1.7.9
 sequence=1
 site=http://archive.apache.org/dist/$name
 description="Version control system"
