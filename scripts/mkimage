@@ -273,8 +273,7 @@ then
     done
     recreate_dir "$fstree"
     export IN_FAKEROOT=y
-    fakeroot -l /usr/lib/libfakeroot/libfakeroot.so -- \
-	$(realpath $0) $do_quiet --fakeroot "$1"
+    fakeroot -- $(realpath $0) $do_quiet --fakeroot "$1"
     exit $?
 else
     _create_directories
