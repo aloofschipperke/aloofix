@@ -152,6 +152,7 @@ compression_suffix=gz
 ssp=stack-protector
 wget_options=
 checksigs=y
+sigsblacklist=_EMPTY_BLACKLIST_
 
 doc_pkg_files="usr/share/doc usr/share/info usr/share/man"
 extra_doc_files=
@@ -677,7 +678,7 @@ checksigs() {
 
 newsigs() {
     (cd "$tarballdir/$1"
-	ls -1 | grep -v "^pci.ids$" \
+	ls -1 | grep -v "^$sigsblacklist$" \
 	    | xargs sha256sum >"$specdir/sha256.sums") \
 	    || return 1
 }

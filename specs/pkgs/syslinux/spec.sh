@@ -21,6 +21,7 @@ extra_doc_files="NEWS doc/*.txt"
 
 tarfile="${name}-${version}.tar.bz2"
 urls="$site/$tarfile http://pciids.sourceforge.net/v2.2/pci.ids"
+sigsblacklist=pci.ids
 
 extra_pkgs=iso
 

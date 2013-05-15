@@ -1,8 +1,6 @@
 ===============================================================================
 Packaging TODOs:
 
-add blacklist to build-pkg newsigs
-
 add abi checking
 
 add sig tarball checks
