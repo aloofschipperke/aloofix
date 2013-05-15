@@ -1,8 +1,6 @@
 ===============================================================================
 Packaging TODOs:
 
-add abi checking
-
 add sig tarball checks
 
 add more detail to docs/packaging.txt
@@ -26,26 +24,16 @@ add more packages:
 	xcb-proto xcmiscproto xextproto xproto xtrans
 
     Some other packages on the maybedo list:
-	apache cronie corosync couchdb cscope doxygen eglibc elfutils
-	grub2 libvirt logrotate lsof ltrace maildrop mlocate monit nfs
-	nullmailer openvswitch otrace parallel parted php pm-utils
-	prof python3 postgresql radvd redis samba sdl systemtap
+	abi-compliance-checker apache cronie corosync couchdb cscope
+	doxygen eglibc elfutils grub2 libvirt logrotate lsof ltrace
+	maildrop mlocate monit nfs nullmailer openvswitch otrace
+	parallel parted php pm-utils prof python3 postgresql radvd
+	redis samba sdl systemtap
 
     and others...
 
---------
-
 test package upgrades
      check parms sent to postinst, etc
-
-add package options
-    disable openssl, etc...
-    choice across multiple packages (e.g. "gnutls nss openssl")
-
-invalid subpkg name should cause magic-install and build-pkg to fail
-
-fix error messages from build failures in mkimage
-    make-buildserver --buildall
 
 add ability to automatically strip preinstall files
     add ability to disable stripping
@@ -54,6 +42,19 @@ add ability to automatically strip preinstall files
 add 'make [eg]?tags', 'make cscope'
     needs to be optional
     run it within build phases or afterwards
+
+add abi checking
+
+add package options (e.g. disable openssl)
+
+invalid subpkg name should cause magic-install and build-pkg to fail
+
+fix error messages from build failures in mkimage
+    make-buildserver --buildall
+
+separate package creation from scripts/build-pkg
+
+add ability to have download mirrors
 
 combine some of the code in scripts/mkimage and scripts/build-pkg
 
@@ -69,7 +70,7 @@ think about doing a real install of build tools when on an aloofix instance
 	  extract-kernel-settings
 	  apply-opkg-hooks (maybe move it into build-pkg)
 
-add --config-cache to configure invocation
+maybe add --config-cache to configure invocation
 
 write a wizard for creating a spec.sh incrementally
       convert url into name, version, site, compression_suffix
@@ -82,10 +83,6 @@ maybe add a layer of indirection for common licenses
 work up better mechanism for multiple license choices and masking
      enable or disable options based on the options
 
-separate package creation from scripts/build-pkg
-
-add ability to have download mirrors
-
 improve support for initial build on other distros
     debian pkgs: build-essential uuid-dev gawk zlib1g-dev libmpc-dev xorriso
     remove // parameter substitutions
@@ -96,11 +93,7 @@ improve support for initial build on other distros
 ===============================================================================
 Image TODOs:
 
-ec2:
-	install base tz glibc busybox opkg zlib dropbear e2fsprogs
-		(openssl webuser lighttpd)
-	setup firstboot, hostname, startup daemons, fstab
-	set web index.html, initialize root ssh
+maybe enable syslogd on installer cd
 
 convert bootscripts= var in rcS into a file containing boot scripts
 	perhaps /etc/sysconfig/bootscripts
@@ -110,7 +103,11 @@ convert bootscripts= var in rcS into a file containing boot scripts
 	lxc/usr/bin/lxc-aloofix
 	lxc/usr/lib/lxc/templates/lxc-aloofix
 
-maybe enable syslogd on installer cd
+ec2:
+	install base tz glibc busybox opkg zlib dropbear e2fsprogs
+		(openssl webuser lighttpd)
+	setup firstboot, hostname, startup daemons, fstab
+	set web index.html, initialize root ssh
 
 ===============================================================================
 Package TODOs:
