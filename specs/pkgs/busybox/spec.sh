@@ -71,7 +71,7 @@ build() {
 }
 
 preinstall() {
-    local symlink
+    local newsymlink
 
     cd "${src}-suid"
     make CONFIG_PREFIX="$preinstalldir" $make_options install
@@ -80,8 +80,8 @@ preinstall() {
     find . -type l | while read F
     do
 	echo $F
-	symlink=$(readlink $F)
-	ln -f -s ${symlink/busybox/busybox-suid} $F
+	newsymlink=$(readlink $F | sed -e 's/busybox/busybox-suid/')
+	ln -f -s $newsymlink $F
     done
     cd "$build_dir"
     make CONFIG_PREFIX="$preinstalldir" $make_options install
