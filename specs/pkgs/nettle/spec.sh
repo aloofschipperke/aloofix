@@ -17,7 +17,7 @@ license_files="COPYING.LIB"
 
 extra_doc_files="AUTHORS ChangeLog NEWS README descore.README TODO"
 
-configure_args=${configure_args/--disable-static/}
+configure_args=$(echo "$configure_args" | sed -e 's/--disable-static//')
 
 extra_configure_args="--disable-openssl"
 

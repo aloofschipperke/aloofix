@@ -22,7 +22,7 @@ extra_doc_files="CHANGELOG HACKING docs/README docs/*.txt"
 
 make_j_qty=1
 
-configure_args=${configure_args/--disable-static/}
+configure_args=$(echo "$configure_args" | sed -e 's/--disable-static//')
 
 extra_configure_args="
 	--disable-nls

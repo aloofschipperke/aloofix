@@ -23,7 +23,7 @@ default_dev_pkg_files=none
 
 use_build_dir=y
 
-configure_args=${configure_args/--disable-dependency-tracking/}
+configure_args=$(echo "$configure_args" | sed -e 's/--disable-dependency-tracking//')
 extra_configure_args="--target=${arch}-linux
                         --disable-nls
                         --without-libiconv-prefix
