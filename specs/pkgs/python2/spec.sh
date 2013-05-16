@@ -5,7 +5,7 @@
 
 name=python2
 majversion=2.7
-minversion=4
+minversion=5
 version=${majversion}.${minversion}
 sequence=1
 site=http://www.python.org/ftp/python/$version
