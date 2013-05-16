@@ -51,7 +51,8 @@ extra_configure_args="--localstatedir=/var/lib/vim
                       --disable-nls
                       --without-x
                       --disable-gpm
-                      --disable-selinux"
+                      --disable-selinux
+		      --enable-cscope"
 
 extra_pkgs="min"
 
