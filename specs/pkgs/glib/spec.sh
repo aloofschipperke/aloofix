@@ -11,7 +11,7 @@ sequence=1
 site=http://ftp.gnome.org/pub/gnome/sources/$name/$majversion
 description="A low-level core library for GTK+ and others"
 depends="zlib-lib libffi-lib pcre-lib"
-builddepends="zlib-dev pkg-config libffi-dev pcre-dev gettext python2 python2-dev"
+builddepends="zlib-dev pkg-config libffi-dev pcre-dev gettext python2 python2-dev automake"
 section=libraries
 compression_suffix=xz
 
