@@ -23,7 +23,7 @@ add more packages:
 	xcb-proto xcmiscproto xextproto xproto xtrans
 
     Some other packages on the maybedo list:
-	abi-compliance-checker apache cronie corosync couchdb cscope
+	abi-compliance-checker apache aspell cronie corosync couchdb
 	doxygen eglibc elfutils grub2 libvirt logrotate lsof ltrace
 	maildrop mlocate monit nfs nullmailer openvswitch parallel
 	parted php pm-utils perf python3 postgresql radvd redis samba
@@ -149,6 +149,7 @@ split packages and/or map licenses to subpackages
     vim		custom docs:(openpub)
     review doc licenses and reassign license value as needed
 
+improve python2 packaging
 improve python2 configure recipe once builddepends is done
 split pump out of distcc package and move python dep to distcc-pump
 
@@ -240,120 +241,123 @@ create an ncurses-min package
 
 ===============================================================================
 		
-		init.d	sv	cron	kmods	ping	btest
-		-------	-------	-------	-------	-------	-----
-acct		x	.	x	x	.	-
-acpid		.	x	.	x	i	-
-aloofix-src	.	.	.	.	c	-
-apr		.	.	.	.	l	make check (1F)
-apr-util	.	.	.	.	.	make check (1F)
-attr		.	.	.	.	.	-
-autoconf	.	.	.	.	.	make check (P)
-automake	.	.	.	.	.	make check (2F) [L]
-base		.	.	.	.	c	n/a
-bash		.	.	.	.	c	make test (F bb)
-bdb		.	.	.	.	.	(prereqs)
-binutils	.	.	.	.	c	(prereqs)
-bison		.	.	.	.	c	make check (P)
-bridge-utils	.	.	.	x	.	-
-busybox		x	x	x	x	.	make check (11F)
-bzip2		.	.	.	.	.	make check (P)
-ca-certificates	.	.	.	.	.	-
-ccache		.	.	.	.	.	make check (P)
-cdrtools	.	.	.	.	.	-
-cmake		.	.	.	.	.	make test (1F)
-ctags		.	.	.	.	.	-
-curl		.	.	.	.	.	make check (1F)
-dialog		.	.	.	.	i	-
-diffutils	.	.	.	.	.	make check (1F)
-distcc		.	x	.	.	.	make check (F)
-dmidecode	.	.	.	.	.	-
-dnsmasq		.	x	.	.	.	-
-dropbear	.	x	.	.	.	-
-e2fsprogs	.	.	.	.	.	(prereq)
-emacs		.	.	.	.	i	-
-expat		.	.	.	.	.	make check (P)
-fakeroot	.	.	.	.	c	make check (1F)
-file		.	.	.	.	.	make check (P)
-findutils	.	.	x	.	.	make check (P)
-flex		.	.	.	.	c	make check (2F)
-gawk		.	.	.	.	.	make check (3F)
-gcc		.	.	.	.	c	(prereq)
-gdb		.	.	.	.	i	(prereq)
-gdbm		.	.	.	.	.	make check (P)
-gettext		.	.	.	.	.	make ehck (32F)
-git		.	.	.	.	.	make check (prereqs)
-glib		.	.	.	.	.	make check (F)
-glibc		.	.	.	.	.	make check (prereq)
-gmp		.	.	.	.	l	make check (P)
-gnupg		.	.	.	.	.	make check (P)
-gnutls		.	.	.	.	.	make check (2F 2S)
-gpgme		.	.	.	.	l	-
-groff		.	.	.	.	.	-
-gzip		.	.	.	.	.	(prereq)
-iana-etc	.	.	.	.	.	make test (P)
-install2hd	.	.	.	.	i	n/a
-iproute2	.	.	x	.	.	-
-ipsec-tools	.	.	.	.	.	make check (P)
-iptables	x	.	.	x	.	-
-kexec-tools	.	.	.	.	i	-
-less		.	.	.	.	i	-
-libassuan	.	.	.	.	l	make check (P)
-libcap		.	.	.	.	l	- (needs root)
-libevent	.	.	.	.	l	make check (P)
-libffi		.	.	.	.	l	(prereq)
-libgcrypt	.	.	.	.	.	make check (P)
-libgpg-error	.	.	.	.	.	make check (P)
-libksba		.	.	.	.	l	make check (P)
-libmpc		.	.	.	.	l	make check (P)
-libpcap		.	.	.	.	.	-
-libpipeline	.	.	.	.	l	-
-libsigsegv	.	.	.	.	l	make check (P)
-libtool		.	.	.	.	.	make check (3F)
-libx86		.	.	.	.	l	-
-libxml2		.	.	.	.	.	make check (10F)
-linux		.	.	.	.	b	-
-lvm2		x	.	.	x	.	-
-m4		.	.	.	.	.	make check (1F bb)
-make		.	.	.	.	c	make check (1F)
-man-db		.	.	.	.	i	make check (3F)
-man-pages	.	.	.	.	.	-
-mdadm		x	x	.	.	.	- (root)
-memcached	.	x	.	.	.	-
-mkinitramfs	.	.	.	x	.	n/a
-mpfr		.	.	.	.	l	make check (P)
-nasm		.	.	.	.	.	(prereq)
-ncurses		.	.	.	.	i	-
-neon		.	.	.	.	l	(prereq)
-nettle		.	.	.	.	.	make check (P)
-openssl		.	.	.	.	.	make test (P)
-opkg		.	.	.	.	c	-
-patch		.	.	.	.	c	make check (2F)
-pciutils	.	.	x	.	.	-
-pcre		.	.	.	.	.	make check (P)
-perl		.	.	.	.	.	make test (3F)
-pinentry	.	.	.	.	i	-
-pkg-config	.	.	.	.	.	make check (4F)
-popt		.	.	.	.	l	make check (P)
-pth		.	.	.	.	l	make check (P)
-python2		.	.	.	.	.	make test (4F 1A 47S)
-rsync		.	.	.	.	.	make check (1F)
-ruby		.	.	.	.	.	make check (hangs)
-serf		.	.	.	.	l	make check (P)
-sqlite		.	.	.	.	.	-
-strace		.	.	.	.	.	(prereq)
-subversion	.	.	.	.	.	make check (prereq)
-syslinux	.	.	.	.	b	-
-sysstat		x	.	x	.	.	-
-tar		.	.	.	.	c	make check (P)
-tcpdump		.	.	.	.	.	make check
-texinfo		.	.	.	.	.	make check (P)
-tmux		.	.	.	.	i	-
-tzdata		.	.	.	.	.	-
-unifdef		.	.	.	.	.	make test (P)
-user		.	.	.	.	c	n/a
-vim		.	.	.	.	i	make test (1F)
-wget		.	.	.	.	c	make check (P)
-zlib		.	.	.	.	l	make check (P)
+		sigs	test
+		-----	-----
+acct		sig	-
+acpid		-	-
+aloofix-src	n/a	-
+apr		asc	make check (1F)
+apr-util	asc	make check (1F)
+attr		sig	-
+autoconf	sig	make check (P)
+automake	sig	make check (2F) [L]
+base			n/a
+bash		sig	make test (F bb)
+bc		-	-
+bdb		-	(prereqs)
+binutils	sig	(prereqs)
+bison		sig	make check (P)
+bridge-utils	-	-
+busybox		sign	make check (11F)
+bzip2		-	make check (P)
+ca-certificates	-	-
+ccache		asc	make check (P)
+cdrtools	-	-
+cmake		-	make test (1F)
+cscope		-	-
+ctags		-	-
+curl		asc	make check (1F)
+dialog		asc	-
+diffutils	sig	make check (1F)
+distcc		-	make check (F)
+dmidecode	sig	-
+dnsmasq		-	-
+dropbear	sha.asc	-
+e2fsprogs	sign	(prereq)
+emacs		sig	-
+expat		-	make check (P)
+fakeroot	-	make check (1F)
+file		-	make check (P)
+findutils	sig	make check (P)
+flex		-	make check (2F)
+gawk		sig	make check (3F)
+gcc		sig	(prereq)
+gdb		sig	(prereq)
+gdbm		sig	make check (P)
+gettext		sig	make ehck (32F)
+git		-	make check (prereqs)
+glib		sha256	make check (F)
+glibc		sig	make check (prereq)
+gmp		sig	make check (P)
+gnupg		sig	make check (P)
+gnutls		sig	make check (2F 2S)
+gpgme		sig	-
+groff		sig	-
+gzip		sig	(prereq)
+iana-etc	-	make test (P)
+install2hd	n/a	n/a
+iproute2	sign	-
+ipsec-tools	-	make check (P)
+iptables	sig	-
+kexec-tools	sign	-
+less		sig	-
+libassuan	sig	make check (P)
+libcap		-	- (needs root)
+libevent	asc	make check (P)
+libffi		-	(prereq)
+libgcrypt	sig	make check (P)
+libgpg-error	sig	make check (P)
+libksba		sig	make check (P)
+libmpc		sig	make check (P)
+libpcap		sig	-
+libpipeline	sig	-
+libsigsegv	sig	make check (P)
+libtool		sig	make check (3F)
+libx86		-	-
+libxml2		-	make check (10F)
+linux		sign	-
+lvm2		asc	-
+m4		sig	make check (1F bb)
+make		sig	make check (1F)
+man-db		sig	make check (3F)
+man-pages	sign	-
+mdadm		sign	- (root)
+memcached	-	-
+mkinitramfs	n/a	n/a
+mpfr		sig	make check (P)
+nasm		-	(prereq)
+ncurses		sig	-
+neon		asc	(prereq)
+nettle		sig	make check (P)
+openssl		asc	make test (P)
+opkg		-	-
+patch		sig	make check (2F)
+pciutils	sign	-
+pcre		sig	make check (P)
+perl		sha256	make test (3F)
+pinentry	sig	-
+pkg-config	-	make check (4F)
+popt		-	make check (P)
+pth		sig	make check (P)
+python2		asc	make test (4F 1A 47S)
+readline	sig	-
+rsync		asc	make check (1F)
+ruby		-	make check (hangs)
+serf		-	make check (P)
+sqlite		-	-
+strace		asc	(prereq)
+subversion	asc	make check (prereq)
+syslinux	sign	-
+sysstat		-	-
+tar		sig	make check (P)
+tcpdump		sig	make check
+texinfo		sig	make check (P)
+tmux		-	-
+tzdata		asc	-
+unifdef		-	make test (P)
+user		n/a	n/a
+vim		-	make test (1F)
+wget		sig	make check (P)
+zlib		-	make check (P)
 
 ===============================================================================
