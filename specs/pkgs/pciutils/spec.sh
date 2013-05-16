@@ -47,6 +47,8 @@ preinstall() {
 }
 
 pkg_base_hook() {
+    pkg_file_mv /usr/sbin/lspci /usr/sbin/lspci.pciutils
+    register_alternative /usr/bin/lspci ../sbin/lspci.pciutils 100
     register_conffile /usr/share/pci.ids.gz
 }
 
