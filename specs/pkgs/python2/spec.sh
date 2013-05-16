@@ -13,7 +13,7 @@ compression_suffix=xz
 tarfile=Python-${version}.tar.$compression_suffix
 src=Python-$version
 description="Version 2.x of the Python scripting language"
-depends="expat-lib libffi-lib zlib-lib openssl-lib"
+depends="python2-dev expat-lib libffi-lib zlib-lib openssl-lib"
 builddepends="expat-dev libffi-dev zlib-dev openssl-dev"
 section=devel
 
