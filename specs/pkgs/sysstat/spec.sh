@@ -4,7 +4,7 @@
 # or (at your option) any later version.
 
 name=sysstat
-version=10.1.4
+version=10.1.5
 sequence=1
 site=http://pagesperso-orange.fr/sebastien.godard
 description="System Activity Reporting tools"
