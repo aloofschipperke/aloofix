@@ -4,7 +4,7 @@
 # or (at your option) any later version.
 
 name=file
-version=5.13
+version=5.14
 sequence=1
 description="File type detection package"
 site=ftp://ftp.astron.com/pub/$name
