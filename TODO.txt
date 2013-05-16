@@ -3,10 +3,9 @@ Packaging TODOs:
 
 add sig tarball checks
 
-add more detail to docs/packaging.txt
-
-add check phase in build-pkg
-    review all packages for builtin test suite
+add ability to automatically strip preinstall files
+    add ability to disable stripping
+    disable if c_optim has debug opts
 
 --------
 
@@ -26,18 +25,14 @@ add more packages:
     Some other packages on the maybedo list:
 	abi-compliance-checker apache cronie corosync couchdb cscope
 	doxygen eglibc elfutils grub2 libvirt logrotate lsof ltrace
-	maildrop mlocate monit nfs nullmailer openvswitch otrace
-	parallel parted php pm-utils prof python3 postgresql radvd
-	redis samba sdl systemtap
+	maildrop mlocate monit nfs nullmailer openvswitch parallel
+	parted php pm-utils perf python3 postgresql radvd redis samba
+	sdl systemtap
 
     and others...
 
 test package upgrades
      check parms sent to postinst, etc
-
-add ability to automatically strip preinstall files
-    add ability to disable stripping
-    disable if c_optim has debug opts
 
 add 'make [eg]?tags', 'make cscope'
     needs to be optional
@@ -46,6 +41,11 @@ add 'make [eg]?tags', 'make cscope'
 add abi checking
 
 add package options (e.g. disable openssl)
+
+add more detail to docs/packaging.txt
+
+add check phase in build-pkg
+    review all packages for builtin test suite
 
 invalid subpkg name should cause magic-install and build-pkg to fail
 
@@ -60,6 +60,7 @@ combine some of the code in scripts/mkimage and scripts/build-pkg
 
 think about doing a real install of build tools when on an aloofix instance
       scripts in /usr/bin
+      maybe subscripts in /usr/lib/aloofix
       specs in /usr/src/aloofix-* or /srv/aloofix
       /srv/aloofix/{build,images,pkgs}
       where to put config file?
@@ -70,8 +71,6 @@ think about doing a real install of build tools when on an aloofix instance
 	  extract-kernel-settings
 	  apply-opkg-hooks (maybe move it into build-pkg)
 
-maybe add --config-cache to configure invocation
-
 write a wizard for creating a spec.sh incrementally
       convert url into name, version, site, compression_suffix
       take a stab at possible license(s) and license files
@@ -79,16 +78,18 @@ write a wizard for creating a spec.sh incrementally
       extra flags from configure to prepopulate extra_configure_args
       check for make check or make test
 
-maybe add a layer of indirection for common licenses
-work up better mechanism for multiple license choices and masking
-     enable or disable options based on the options
-
 improve support for initial build on other distros
     debian pkgs: build-essential uuid-dev gawk zlib1g-dev libmpc-dev xorriso
     remove // parameter substitutions
     variable for mkisofs so deb can use xorrisofs
     need to reference built lib and include dirs
     builds needs to reference built libs/headers instead of the build server's
+
+maybe add --config-cache to configure invocation
+
+maybe add a layer of indirection for common licenses
+work up better mechanism for multiple license choices and masking
+     enable or disable options based on the options
 
 ===============================================================================
 Image TODOs:
@@ -112,8 +113,6 @@ ec2:
 ===============================================================================
 Package TODOs:
 
-improve ipv6 firewall rules
-
 add command-line args to kexec-load
     --kernel, --initrd, --list ?
 
@@ -123,27 +122,23 @@ remove more stuff from linux kernel
 add disk linker helper script into /lib/mdev/ (by-label, by-uuid)
 
 maybe have set time with ntpd in the installer script
-
 need to tweak the hwclock stuff - 11-minute mode, etc
-
-maybe replace use of openssl with gnutls in curl
 
 maybe combine sv scripts for busybox acpid and regular acpid
 
 add opkg-keys to opkg
     or create a second package
 
+maybe replace use of openssl with gnutls in curl
+
+improve ipv6 firewall rules
 have iptables init.d script check for a restore file
 
-improve python2 configure recipe once builddepends is done
-    
 improve syslinux packaging
 
-maybe split gawk into multiple packages
-
-split out libltdl from libtool
-
 specify different license for gnutls libs vs base
+
+maybe split out libltdl from libtool
 
 maybe add http://www.kernel.org/pub/linux/docs/man-pages/man-pages-posix/man-pages-posix-2003-a.tar.xz
 
@@ -154,6 +149,7 @@ split packages and/or map licenses to subpackages
     vim		custom docs:(openpub)
     review doc licenses and reassign license value as needed
 
+improve python2 configure recipe once builddepends is done
 split pump out of distcc package and move python dep to distcc-pump
 
 have clocksource be configurable
@@ -220,7 +216,7 @@ consider splitting e2fsprogs into separate packages
 add cron and init.d scripts for cbq
 
 need to add logic for default gateway with multiple interfaces
-     current use of DEFAULT_INTERFACE is too simplistic for many use cases
+     current use of DEFAULT_INTERFACE is too simplistic for some use cases
      perhaps add route metric mechanism to udhcpc action script
      	     list of interfaces we'll accept for a default gateway entry
 	     metric offset for each interface (defaults to 1)
