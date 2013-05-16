@@ -4,7 +4,7 @@
 # or (at your option) any later version.
 
 name=pciutils
-version=3.1.10
+version=3.2.0
 sequence=1
 site=ftp://ftp.kernel.org/pub/software/utils/$name
 description="PCI utilities"
