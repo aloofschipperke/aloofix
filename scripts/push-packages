@@ -27,4 +27,7 @@ die() { echo "$*" >/dev/tty; exit 1; }
 [ -d "$localdir" ] || die "$localdir doesn't exist"
 [ -d "$destdir" ] || die "$destdir doesn't exist"
 
-exec rsync -i -a --delay-updates --delete-after "$localdir/" "$destdir"
+exec rsync -i -a \
+    --exclude="*.control" \
+    --delay-updates --delete-after \
+    "$localdir/" "$destdir"
