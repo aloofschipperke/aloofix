@@ -8,7 +8,7 @@ version=1.22.2
 sequence=1
 site=http://ftp.gnu.org/gnu/$name
 description="The groff document formatting system"
-depends="gcc-gcclib perl groff-min"
+depends="gcc-lib perl groff-min"
 builddepends="bash"
 section=doctools
 
@@ -24,6 +24,7 @@ install_target=install
 extra_pkgs="min"
 
 min_description="Subset of groff for manpage creation"
+min_depends=gcc-lib
 
 min_pkg_files="usr/bin/eqn
 usr/bin/groff
