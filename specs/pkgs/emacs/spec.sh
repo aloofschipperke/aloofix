@@ -22,7 +22,11 @@ doc_pkg_files="$doc_pkg_files
 
 extra_doc_files="BUGS ChangeLog README"
 
-extra_configure_args="--without-sound --without-gpm --without-x"
+extra_configure_args="
+	--without-sound
+	--without-gpm
+	--without-gnutls
+	--without-x"
 
 preinstall_hook() {
     mv "$preinstalldir"/usr/bin/emacs-$version \
