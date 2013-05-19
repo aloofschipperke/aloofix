@@ -1,13 +1,13 @@
 ===============================================================================
 Packaging TODOs:
 
+fix missing dirs file in /usr/share/info
+man-db isn't working correctly - doesn't display manpages
+       missing libstdc++.so.6
+
 add sig tarball checks
 
-add ability to automatically strip preinstall files
-    add ability to disable stripping
-    disable if c_optim has debug opts
-
---------
+test package upgrades
 
 add more packages:
 
@@ -31,8 +31,9 @@ add more packages:
 
     and others...
 
-test package upgrades
-     check parms sent to postinst, etc
+add ability to automatically strip preinstall files
+    add ability to disable stripping
+    disable if c_optim has debug opts
 
 add 'make [eg]?tags', 'make cscope'
     needs to be optional
@@ -142,13 +143,6 @@ maybe split out libltdl from libtool
 
 maybe add http://www.kernel.org/pub/linux/docs/man-pages/man-pages-posix/man-pages-posix-2003-a.tar.xz
 
-split packages and/or map licenses to subpackages
-    e2fsprogs	GPLv2 lib/{ext2fs,e2p}:LGPLv2 lib/uuid:BSD lib/{et,ss}:MIT
-    libksba	lib:LGPLv3+/GPLv2+ tools:GPLv3+ manual:GPLv3+
-    syslinux	GPLv2+ CC-by-sa-3.0 custom
-    vim		custom docs:(openpub)
-    review doc licenses and reassign license value as needed
-
 improve python2 packaging
 improve python2 configure recipe once builddepends is done
 split pump out of distcc package and move python dep to distcc-pump
@@ -156,6 +150,13 @@ split pump out of distcc package and move python dep to distcc-pump
 have clocksource be configurable
 
 add suspend to ram and suspend to disk
+
+split packages and/or map licenses to subpackages
+    e2fsprogs	GPLv2 lib/{ext2fs,e2p}:LGPLv2 lib/uuid:BSD lib/{et,ss}:MIT
+    libksba	lib:LGPLv3+/GPLv2+ tools:GPLv3+ manual:GPLv3+
+    syslinux	GPLv2+ CC-by-sa-3.0 custom
+    vim		custom docs:(openpub)
+    review doc licenses and reassign license value as needed
 
 move user list into separate file
      pkgspecs/user/users
