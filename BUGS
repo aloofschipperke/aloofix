@@ -4,6 +4,9 @@ version of Aloofix;
 - It's not thoroughly tested. Adding 'make check' is in process, as is
   checking ABIs.
 
+- The buildstrap procedure needs to use a cross-compiler or something
+  similar to LFS.
+
 - Checking digital signatures of downloaded tarballs is not yet
   implemented.
 
