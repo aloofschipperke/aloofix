@@ -25,14 +25,14 @@ top=$(pwd)
 die() { echo "$*" >/dev/tty; exit 1; }
 get_pkg_var() { eval "echo \${${1}_${2}-}"; }
 usage() {
-    echo "usage: $0 [--builddepends] [--depends] [--withargs] \$pkgname+" >&2
+    echo "usage: $0 [--builddepends] [--withargs] \$pkgname+" >&2
     exit 2
 }
 
-args=$(getopt -l help,withargs,builddepends,depends '' "$@")
+args=$(getopt -l help,withargs,builddepends '' "$@")
 [ $? -eq 0 ] || usage
 
-flavor=depends
+flavor=builddepends
 withargs=
 
 eval set -- "$args"
@@ -41,9 +41,6 @@ do
     case "$arg" in
 	--builddepends)
 	    flavor=builddepends
-	    shift ;;
-	--depends)
-	    flavor=depends
 	    shift ;;
 	--withargs)
 	    withargs=yes
