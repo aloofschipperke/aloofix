@@ -20,7 +20,7 @@ Introduction
 This document provides information on packaging in Aloofix.
 
 Aloofix uses `opkg` for package management. It is similar in concept
-to Debian's `apt' application, but has fewer features. This document
+to Debian's `apt` application, but has fewer features. This document
 doesn't describe how to use `opkg`, rather how to use the Aloofix
 build kit for compiling and packaging applications in the Aloofix
 environment.
