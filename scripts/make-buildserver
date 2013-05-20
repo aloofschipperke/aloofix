@@ -68,13 +68,13 @@ user=$(id -un)
 
 ./scripts/magic-install \
     $prelist \
-    $(./scripts/list-pkg-dependencies --builddepends $pkglist) \
+    $(./scripts/list-build-deps $pkglist) \
     $pkglist
 
 if [ -z "$do_minimal" ]
 then
     allpkgs="$(./scripts/build-pkg --list)"
-    allprereqs=$(./scripts/list-pkg-dependencies --builddepends $allpkgs)
+    allprereqs=$(./scripts/list-build-deps $allpkgs)
     ./scripts/magic-install $allprereqs
 
     if [ "$do_buildall" ]

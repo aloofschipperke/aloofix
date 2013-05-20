@@ -33,7 +33,7 @@ starttime=$(date)
 if [ -f /etc/aloofix-release ]
 then
     echo "Building and installing prequisite packages"
-    buildpkgs=$(echo $(./scripts/list-pkg-dependencies --builddepends $pkglist))
+    buildpkgs=$(echo $(./scripts/list-build-deps $pkglist))
     echo "[root required]"
     su -c "./scripts/magic-install $buildpkgs cdrtools-mkisofs"
 fi
