@@ -1,13 +1,31 @@
 ===============================================================================
-Packaging TODOs:
+Near-term TODOs:
+
+convert list-pkg-dependencies to list-build-deps
+
+subpackages need to explicitly reference version number
+    need to rework contents of 'depends' variable
+
+remove --builddepends option - no longer needed
 
 fix missing dirs file in /usr/share/info
 man-db isn't working correctly - doesn't display manpages
        missing libstdc++.so.6
 
+test package upgrades
+
+===============================================================================
+Packaging TODOs:
+
 add sig tarball checks
 
-test package upgrades
+add ability to automatically strip preinstall files
+    add ability to disable stripping
+    disable if c_optim has debug opts
+
+add 'make [eg]?tags', 'make cscope'
+    needs to be optional
+    run it within build phases or afterwards
 
 add more packages:
 
@@ -31,13 +49,7 @@ add more packages:
 
     and others...
 
-add ability to automatically strip preinstall files
-    add ability to disable stripping
-    disable if c_optim has debug opts
-
-add 'make [eg]?tags', 'make cscope'
-    needs to be optional
-    run it within build phases or afterwards
+buildstrap needs a cross-compiler
 
 add abi checking
 
