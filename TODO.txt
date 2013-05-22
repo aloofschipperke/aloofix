@@ -1,12 +1,13 @@
 ===============================================================================
 Near-term TODOs:
 
+upgrade gmp to 5.1.2
+upgrade sqlite to 3.7.17
+
 convert list-pkg-dependencies to list-build-deps
 
 subpackages need to explicitly reference version number
     need to rework contents of 'depends' variable
-
-remove --builddepends option - no longer needed
 
 fix missing dirs file in /usr/share/info
 man-db isn't working correctly - doesn't display manpages
