@@ -4,7 +4,7 @@
 # or (at your option) any later version.
 
 name=sqlite
-version=3071602
+version=3071700
 sequence=1
 description="Sqlite Database"
 
