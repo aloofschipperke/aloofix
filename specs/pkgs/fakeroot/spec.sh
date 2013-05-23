@@ -4,14 +4,14 @@
 # or (at your option) any later version.
 
 name=fakeroot
-version=1.18.4
+version=1.19
 sequence=1
 site=http://ftp.debian.org/debian/pool/main/f/$name
-tarfile=${name}_${version}.orig.tar.bz2
+compression_suffix=bz2
+tarfile=${name}_${version}.orig.tar.$compression_suffix
 description="Fake root environment"
 depends=
 section=devel
-compression_suffix=bz2
 
 license=GPLv3+
 license_files="COPYING"
