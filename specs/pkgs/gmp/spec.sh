@@ -4,7 +4,7 @@
 # or (at your option) any later version.
 
 name=gmp
-version=5.1.1
+version=5.1.2
 sequence=1
 site=ftp://ftp.gmplib.org/pub/${name}-${version}
 description="A library for arbitrary precision arithmetic"
