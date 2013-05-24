@@ -1,10 +1,7 @@
 ===============================================================================
 Near-term TODOs:
 
-upgrade
-	automake 1.13.2
-	fakeroot 1.19
-	linux 3.9.3
+upgrade automake 1.13.2
 
 subpackages need to explicitly reference version number
     need to rework contents of 'depends' variable - comma-list
