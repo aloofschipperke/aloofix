@@ -11,6 +11,7 @@ compression_suffix=bz2
 tarfile=${name}_${version}.orig.tar.$compression_suffix
 description="Fake root environment"
 depends=
+builddepends="libcap-dev"
 section=devel
 
 license=GPLv3+
