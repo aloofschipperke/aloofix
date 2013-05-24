@@ -252,7 +252,7 @@ create an ncurses-min package
 acct		sig	-
 acpid		-	-
 aloofix-src	n/a	-
-apr		asc	make check (1F)
+apr		asc	make check (P)
 apr-util	asc	make check (1F)
 attr		sig	-
 autoconf	sig	make check (P)
