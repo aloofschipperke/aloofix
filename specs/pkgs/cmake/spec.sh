@@ -5,7 +5,7 @@
 
 name=cmake
 majversion=2.8
-minversion=10.2
+minversion=11
 version=${majversion}.$minversion
 sequence=1
 site=http://www.cmake.org/files/v$majversion
