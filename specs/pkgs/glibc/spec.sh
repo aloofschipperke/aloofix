@@ -5,7 +5,7 @@
 
 name=glibc
 version=2.17
-sequence=1
+sequence=2
 site=http://ftp.gnu.org/gnu/$name
 description="GNU Libc library"
 depends="base tzdata-min glibc-min"
