@@ -1,6 +1,7 @@
 ftp-data	20/tcp
 ftp		21/tcp
 ssh		22/tcp
+telnet		23/tcp
 smtp		25/tcp
 domain		53/udp
 domain		53/tcp
