@@ -1,12 +1,13 @@
 ===============================================================================
 Near-term TODOs:
 
+upgrade
+	automake 1.13.2
+	fakeroot 1.19
+	linux 3.9.3
+
 subpackages need to explicitly reference version number
-    need to rework contents of 'depends' variable
-
-fix missing dirs file in /usr/share/info
-
-test package upgrades
+    need to rework contents of 'depends' variable - comma-list
 
 ===============================================================================
 Packaging TODOs:
@@ -245,6 +246,7 @@ maybe have group removal remove all members first, then remove group
 
 create an ncurses-min package
        shared libraries and subset of terminfo files
+       linux, xterm, screen, rxvt
 
 ===============================================================================
 		
@@ -258,10 +260,10 @@ apr-util	asc	make check (1F)
 attr		sig	-
 autoconf	sig	make check (P)
 automake	sig	make check (2F) [L]
-base			n/a
+base		n/a	-
 bash		sig	make test (F bb)
 bc		-	-
-bdb		-	(prereqs)
+bdb		md5	(prereqs)
 binutils	sig	(prereqs)
 bison		sig	make check (P)
 bridge-utils	-	-
