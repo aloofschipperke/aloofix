@@ -34,10 +34,10 @@ add more packages:
 
     Some other packages on the maybedo list:
 	abi-compliance-checker apache aspell cronie corosync couchdb
-	doxygen eglibc elfutils grub2 libvirt logrotate lsof ltrace
-	maildrop mlocate monit nfs nullmailer openvswitch parallel
-	parted php pm-utils perf python3 postgresql radvd redis samba
-	sdl systemtap
+	doxygen eglibc elfutils grub2 libarchive libvirt logrotate
+	lsof ltrace maildrop mlocate monit nfs nullmailer openvswitch
+	parallel parted php pm-utils perf python3 postgresql radvd
+	redis samba sdl systemtap zip
 
     and others...
 
@@ -117,6 +117,8 @@ ec2:
 
 ===============================================================================
 Package TODOs:
+
+add libarchive to cmake builddepends
 
 add command-line args to kexec-load
     --kernel, --initrd, --list ?
@@ -256,7 +258,7 @@ apr		asc	make check (P)
 apr-util	asc	make check (1F)
 attr		sig	-
 autoconf	sig	make check (P)
-automake	sig	make check (2F) [L]
+automake	sig	make check (P) [L]
 base		n/a	-
 bash		sig	make test (F bb)
 bc		-	-
@@ -264,12 +266,12 @@ bdb		md5	(prereqs)
 binutils	sig	(prereqs)
 bison		sig	make check (P)
 bridge-utils	-	-
-busybox		sign	make check (11F)
+busybox		sign	make check (prereq: zip)
 bzip2		-	make check (P)
 ca-certificates	-	-
 ccache		asc	make check (P)
 cdrtools	-	-
-cmake		-	make test (1F)
+cmake		-	make test (1F) (probably needs libarchive)
 cscope		-	-
 ctags		-	-
 curl		asc	make check (1F)
@@ -282,21 +284,21 @@ dropbear	sha.asc	-
 e2fsprogs	sign	(prereq)
 emacs		sig	-
 expat		-	make check (P)
-fakeroot	-	make check (1F)
+fakeroot	-	make check (2F) tar, xattr
 file		-	make check (P)
 findutils	sig	make check (P)
-flex		-	make check (2F)
-gawk		sig	make check (3F)
+flex		-	make check (2F) (needs patch for bison)
+gawk		sig	make check (5F) (needs input at 123)
 gcc		sig	(prereq)
 gdb		sig	(prereq)
 gdbm		sig	make check (P)
-gettext		sig	make ehck (32F)
+gettext		sig	make check (32F)
 git		-	make check (prereqs)
 glib		sha256	make check (F)
 glibc		sig	make check (prereq)
 gmp		sig	make check (P)
 gnupg		sig	make check (P)
-gnutls		sig	make check (2F 2S)
+gnutls		sig	make check (2F 2S) (prereq: diffutils)
 gpgme		sig	-
 groff		sig	-
 gzip		sig	(prereq)
