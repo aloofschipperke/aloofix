@@ -34,10 +34,10 @@ add more packages:
 
     Some other packages on the maybedo list:
 	abi-compliance-checker apache aspell cronie corosync couchdb
-	doxygen eglibc elfutils grub2 libvirt logrotate lsof ltrace
-	maildrop mlocate monit nfs nullmailer openvswitch parallel
-	parted php pm-utils perf python3 postgresql radvd redis samba
-	sdl systemtap
+	doxygen ed eglibc elfutils grub2 libarchive libvirt logrotate
+	lsof ltrace maildrop mlocate monit nfs nullmailer openvswitch
+	parallel parted php pm-utils perf python3 postgresql radvd
+	redis samba sdl systemtap zip
 
     and others...
 
@@ -117,6 +117,8 @@ ec2:
 
 ===============================================================================
 Package TODOs:
+
+add libarchive to cmake builddepends
 
 add command-line args to kexec-load
     --kernel, --initrd, --list ?
@@ -256,7 +258,7 @@ apr		asc	make check (P)
 apr-util	asc	make check (1F)
 attr		sig	-
 autoconf	sig	make check (P)
-automake	sig	make check (2F) [L]
+automake	sig	make check (P) [L]
 base		n/a	-
 bash		sig	make test (F bb)
 bc		-	-
@@ -264,39 +266,39 @@ bdb		md5	(prereqs)
 binutils	sig	(prereqs)
 bison		sig	make check (P)
 bridge-utils	-	-
-busybox		sign	make check (11F)
+busybox		sign	make check (prereq: zip)
 bzip2		-	make check (P)
 ca-certificates	-	-
 ccache		asc	make check (P)
 cdrtools	-	-
-cmake		-	make test (1F)
+cmake		-	make test (1F) (probably needs libarchive)
 cscope		-	-
 ctags		-	-
 curl		asc	make check (1F)
 dialog		asc	-
-diffutils	sig	make check (1F)
-distcc		-	make check (F)
+diffutils	sig	make check (P)
+distcc		-	make check (F) (compile fails)
 dmidecode	sig	-
 dnsmasq		-	-
 dropbear	sha.asc	-
 e2fsprogs	sign	(prereq)
 emacs		sig	-
 expat		-	make check (P)
-fakeroot	-	make check (1F)
+fakeroot	-	make check (2F) tar, xattr
 file		-	make check (P)
 findutils	sig	make check (P)
-flex		-	make check (2F)
-gawk		sig	make check (3F)
+flex		-	make check (2F) (needs patch for tests against bison)
+gawk		sig	make check (5F) (needs input at 123)
 gcc		sig	(prereq)
 gdb		sig	(prereq)
 gdbm		sig	make check (P)
-gettext		sig	make ehck (32F)
+gettext		sig	make check (32F)
 git		-	make check (prereqs)
-glib		sha256	make check (F)
-glibc		sig	make check (prereq)
+glib		sha256	make check (F) (iconv)
+glibc		sig	make check (issues with bb ls)
 gmp		sig	make check (P)
 gnupg		sig	make check (P)
-gnutls		sig	make check (2F 2S)
+gnutls		sig	make check (2F 2S) (prereq: diffutils and datefudge)
 gpgme		sig	-
 groff		sig	-
 gzip		sig	(prereq)
@@ -318,14 +320,14 @@ libmpc		sig	make check (P)
 libpcap		sig	-
 libpipeline	sig	-
 libsigsegv	sig	make check (P)
-libtool		sig	make check (3F)
+libtool		sig	make check (3F) (42 86 115)
 libx86		-	-
 libxml2		-	make check (10F)
 linux		sign	-
 lvm2		asc	-
-m4		sig	make check (1F bb)
-make		sig	make check (1F)
-man-db		sig	make check (3F)
+m4		sig	make check (P)
+make		sig	make check (P)
+man-db		sig	make check (3F) (iconv)
 man-pages	sign	-
 mdadm		sign	- (root)
 memcached	-	-
@@ -333,26 +335,26 @@ mkinitramfs	n/a	n/a
 mpfr		sig	make check (P)
 nasm		-	(prereq)
 ncurses		sig	-
-neon		asc	(prereq)
+neon		asc	(prereq: full gzip)
 nettle		sig	make check (P)
 openssl		asc	make test (P)
 opkg		-	-
-patch		sig	make check (2F)
+patch		sig	make check (2F) ('ed -' and 'cat -v')
 pciutils	sign	-
 pcre		sig	make check (P)
-perl		sha256	make test (3F)
+perl		sha256	make test (2F) 01_Archive-Extract.t magic.t
 pinentry	sig	-
-pkg-config	-	make check (4F)
+pkg-config	-	make check (P)
 popt		-	make check (P)
 pth		sig	make check (P)
-python2		asc	make test (4F 1A 47S)
+python2		asc	make test (3F 1A 9S) test_ioctl test_openpty test_pty
 readline	sig	-
 rsync		asc	make check (1F)
 ruby		-	make check (hangs)
 serf		-	make check (P)
 sqlite		-	-
-strace		asc	(prereq)
-subversion	asc	make check (prereq)
+strace		asc	(issues with bb timeout)
+subversion	asc	make check (prereq: python/sqlite3)
 syslinux	sign	-
 sysstat		-	-
 tar		sig	make check (P)
@@ -362,7 +364,7 @@ tmux		-	-
 tzdata		asc	-
 unifdef		-	make test (P)
 user		n/a	n/a
-vim		-	make test (1F)
+vim		-	make test (P)
 wget		sig	make check (P)
 zlib		-	make check (P)
 
