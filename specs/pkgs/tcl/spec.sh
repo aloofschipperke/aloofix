@@ -27,5 +27,6 @@ configure_args=$(echo "$configure_args" | sed -e 's@--datarootdir=[^ ]\+@@')
 configure() {
     cd $src/$build_subdir && \
 	./configure $configure_args \
+	--without-tzdata \
 	--enable-man-suffix=tcl
 }
