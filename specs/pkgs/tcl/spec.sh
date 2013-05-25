@@ -24,6 +24,9 @@ build_subdir=unix
 
 configure_args=$(echo "$configure_args" | sed -e 's@--datarootdir=[^ ]\+@@')
 
+extra_lib_pkg_files="usr/lib/*/lib*.so"
+extra_dev_pkg_files="usr/lib/*/lib*.a"
+
 configure() {
     cd $src/$build_subdir && \
 	./configure $configure_args \
