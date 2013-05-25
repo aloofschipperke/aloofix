@@ -1,6 +1,8 @@
 ===============================================================================
 Near-term TODOs:
 
+tag release 0.9.0
+
 upgrade automake 1.13.2
 
 subpackages need to explicitly reference version number
@@ -12,6 +14,7 @@ Packaging TODOs:
 add sig tarball checks
 
 add ability to automatically strip preinstall files
+    add file to toolchain list
     add ability to disable stripping
     disable if c_optim has debug opts
 
@@ -25,7 +28,7 @@ add more packages:
 	chrony cvs drbd ec2-ami-tools ec2-api-tools ejabberd elinks
 	erlang fcgi gpm grub icu4c ipvsadm keepalived libxslt lighttpd
 	links lxc mercurial (mysql) openjdk qemu screen shorewall
-	shorewall-lite spidermonkey subversion
+	shorewall-lite spidermonkey
 
     Minimal X11 support:
 	bigreqsproto inputproto kbproto libx11 libxau libxcb libxdmcp
@@ -34,10 +37,10 @@ add more packages:
 
     Some other packages on the maybedo list:
 	abi-compliance-checker apache aspell cronie corosync couchdb
-	doxygen ed eglibc elfutils grub2 libarchive libvirt logrotate
-	lsof ltrace maildrop mlocate monit nfs nullmailer openvswitch
-	parallel parted php pm-utils perf python3 postgresql radvd
-	redis samba sdl systemtap zip
+	dejagnu doxygen ed eglibc elfutils grub2 libarchive libvirt
+	logrotate lsof ltrace maildrop mlocate monit nfs nginx
+	nullmailer openvswitch parallel parted php pm-utils perf
+	python3 postgresql radvd redis samba sdl systemtap xorriso zip
 
     and others...
 
@@ -53,9 +56,6 @@ add check phase in build-pkg
     review all packages for builtin test suite
 
 invalid subpkg name should cause magic-install and build-pkg to fail
-
-fix error messages from build failures in mkimage
-    make-buildserver --buildall
 
 separate package creation from scripts/build-pkg
 
@@ -260,10 +260,10 @@ attr		sig	-
 autoconf	sig	make check (P)
 automake	sig	make check (P) [L]
 base		n/a	-
-bash		sig	make test (F bb)
+bash		sig	make test (F bb) (locale, printf, catv)
 bc		-	-
-bdb		md5	(prereqs)
-binutils	sig	(prereqs)
+bdb		md5	(prereq: tcl)
+binutils	sig	(prereq: dejagnu)
 bison		sig	make check (P)
 bridge-utils	-	-
 busybox		sign	make check (prereq: zip)
@@ -281,14 +281,15 @@ distcc		-	make check (F) (compile fails)
 dmidecode	sig	-
 dnsmasq		-	-
 dropbear	sha.asc	-
-e2fsprogs	sign	(prereq)
+e2fsprogs	sign	(prereq) (bb ps issues)
 emacs		sig	-
 expat		-	make check (P)
+expect		-	make test (P)
 fakeroot	-	make check (2F) tar, xattr
 file		-	make check (P)
 findutils	sig	make check (P)
 flex		-	make check (2F) (needs patch for tests against bison)
-gawk		sig	make check (5F) (needs input at 123)
+gawk		sig	make check (4F) (multibyte, ls bb)
 gcc		sig	(prereq)
 gdb		sig	(prereq)
 gdbm		sig	make check (P)
@@ -312,7 +313,7 @@ less		sig	-
 libassuan	sig	make check (P)
 libcap		-	- (needs root)
 libevent	asc	make check (P)
-libffi		-	(prereq)
+libffi		-	(prereq: dejagnu)
 libgcrypt	sig	make check (P)
 libgpg-error	sig	make check (P)
 libksba		sig	make check (P)
@@ -322,7 +323,7 @@ libpipeline	sig	-
 libsigsegv	sig	make check (P)
 libtool		sig	make check (3F) (42 86 115)
 libx86		-	-
-libxml2		-	make check (10F)
+libxml2		-	make check (10F) (ebcdic)
 linux		sign	-
 lvm2		asc	-
 m4		sig	make check (P)
@@ -347,7 +348,7 @@ pinentry	sig	-
 pkg-config	-	make check (P)
 popt		-	make check (P)
 pth		sig	make check (P)
-python2		asc	make test (3F 1A 9S) test_ioctl test_openpty test_pty
+python2		asc	make test (P)
 readline	sig	-
 rsync		asc	make check (1F)
 ruby		-	make check (hangs)
@@ -358,7 +359,8 @@ subversion	asc	make check (prereq: python/sqlite3)
 syslinux	sign	-
 sysstat		-	-
 tar		sig	make check (P)
-tcpdump		sig	make check
+tcl		-	make test (P)
+tcpdump		sig	make check (1F)
 texinfo		sig	make check (P)
 tmux		-	-
 tzdata		asc	-
