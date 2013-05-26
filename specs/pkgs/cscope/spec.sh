@@ -5,7 +5,7 @@
 
 name=cscope
 version=15.8a
-sequence=1
+sequence=2
 description="Text screen based source browsing tool"
 site=http://downloads.sourceforge.net/$name
 depends="ncurses"
@@ -16,3 +16,5 @@ license=BSD-3-Clause
 license_files=COPYING
 
 extra_doc_files="AUTHORS ChangeLog NEWS README TODO"
+
+extra_configure_args=LIBS=-ltinfo

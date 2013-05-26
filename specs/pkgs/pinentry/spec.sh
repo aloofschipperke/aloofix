@@ -5,7 +5,7 @@
 
 name=pinentry
 version=0.8.2
-sequence=1
+sequence=2
 site=ftp://ftp.gnupg.org/gcrypt/$name
 description="PIN and passphrase entry dialogs"
 depends="ncurses libcap-lib"
@@ -18,7 +18,8 @@ license_files="COPYING"
 
 extra_doc_files="AUTHORS ChangeLog NEWS README THANKS TODO"
 
-extra_configure_args="--enable-pinentry-curses
+extra_configure_args="LIBS=-ltinfo
+		      --enable-pinentry-curses
                       --disable-pinentry-gtk
                       --disable-pinentry-gtk2
                       --disable-pinentry-qt
