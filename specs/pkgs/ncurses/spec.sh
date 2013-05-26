@@ -5,7 +5,7 @@
 
 name=ncurses
 version=5.9
-sequence=2
+sequence=1
 site=http://ftp.gnu.org/pub/gnu/$name
 description="NCurses library and support utilities"
 depends=
