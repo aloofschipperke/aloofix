@@ -5,7 +5,7 @@
 
 name=expect
 version=5.45
-sequence=1
+sequence=2
 description="A tools for automating interactive applications"
 compression_suffix=gz
 src=${name}${version}
@@ -25,3 +25,7 @@ configure_args=$(echo "$configure_args" | sed -e 's@--datarootdir=[^ ]\+@@')
 extra_lib_pkg_files="usr/lib/*/lib*.so"
 
 install_target=install
+
+preinstall_hook() {
+	rm -f "$preinstalldir/usr/bin/mkpasswd"
+}

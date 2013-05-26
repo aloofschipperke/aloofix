@@ -8,6 +8,8 @@ upgrade automake 1.13.2
 subpackages need to explicitly reference version number
     need to rework contents of 'depends' variable - comma-list
 
+fix noarch issues with dejagnu
+
 ===============================================================================
 Packaging TODOs:
 
@@ -29,7 +31,6 @@ add more packages:
 	erlang fcgi gpm grub icu4c ipvsadm keepalived libxslt lighttpd
 	links lxc mercurial (mysql) openjdk qemu screen shorewall
 	shorewall-lite spidermonkey
-
     Minimal X11 support:
 	bigreqsproto inputproto kbproto libx11 libxau libxcb libxdmcp
 	libxext libxi libxrender libxtst recordproto renderproto
@@ -255,7 +256,7 @@ acct		sig	-
 acpid		-	-
 aloofix-src	n/a	-
 apr		asc	make check (P)
-apr-util	asc	make check (1F)
+apr-util	asc	make check (1F) (testxlate)
 attr		sig	-
 autoconf	sig	make check (P)
 automake	sig	make check (P) [L]
@@ -263,7 +264,7 @@ base		n/a	-
 bash		sig	make test (F bb) (locale, printf, catv)
 bc		-	-
 bdb		md5	(prereq: tcl)
-binutils	sig	(prereq: dejagnu)
+binutils	sig	make check (2E) (prereq: dejagnu)
 bison		sig	make check (P)
 bridge-utils	-	-
 busybox		sign	make check (prereq: zip)
@@ -275,6 +276,7 @@ cmake		-	make test (1F) (probably needs libarchive)
 cscope		-	-
 ctags		-	-
 curl		asc	make check (1F)
+dejagnu		sig	make check (P)
 dialog		asc	-
 diffutils	sig	make check (P)
 distcc		-	make check (F) (compile fails)
@@ -290,11 +292,11 @@ file		-	make check (P)
 findutils	sig	make check (P)
 flex		-	make check (2F) (needs patch for tests against bison)
 gawk		sig	make check (4F) (multibyte, ls bb)
-gcc		sig	(prereq)
-gdb		sig	(prereq)
+gcc		sig	make check (prereq: dejagnu) [L]
+gdb		sig	make check (+F) (prereq: dejagnu)
 gdbm		sig	make check (P)
 gettext		sig	make check (32F)
-git		-	make check (prereqs)
+git		-	make check (9F) (i18n)
 glib		sha256	make check (F) (iconv)
 glibc		sig	make check (issues with bb ls)
 gmp		sig	make check (P)
@@ -302,7 +304,7 @@ gnupg		sig	make check (P)
 gnutls		sig	make check (2F 2S) (prereq: diffutils and datefudge)
 gpgme		sig	-
 groff		sig	-
-gzip		sig	(prereq)
+gzip		sig	make check (P) (prereq: diffutils)
 iana-etc	-	make test (P)
 install2hd	n/a	n/a
 iproute2	sign	-
@@ -313,7 +315,7 @@ less		sig	-
 libassuan	sig	make check (P)
 libcap		-	- (needs root)
 libevent	asc	make check (P)
-libffi		-	(prereq: dejagnu)
+libffi		-	make check (P) (prereq: dejagnu)
 libgcrypt	sig	make check (P)
 libgpg-error	sig	make check (P)
 libksba		sig	make check (P)
@@ -334,7 +336,7 @@ mdadm		sign	- (root)
 memcached	-	-
 mkinitramfs	n/a	n/a
 mpfr		sig	make check (P)
-nasm		-	(prereq)
+nasm		-	(need to review)
 ncurses		sig	-
 neon		asc	(prereq: full gzip)
 nettle		sig	make check (P)
