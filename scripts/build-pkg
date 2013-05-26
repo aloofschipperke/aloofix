@@ -748,7 +748,7 @@ fi
 
 ###############################################################################
 
-cflags="${cflags:-$c_optim -pipe -march=$arch -f$ssp} $extra_cflags"
+cflags="${cflags:-$c_optim -pipe -march=$default_platform_arch -f$ssp} $extra_cflags"
 install_target=${install_target:-install-strip}
 default_dev_pkg_files=${default_dev_pkg_files:-"usr/include
 	usr/lib/pkgconfig
