@@ -11,7 +11,7 @@ patchlist="$(seq -w 001 $patchlevel)"
 
 baseversion="${majversion}.${minversion}"
 version=${baseversion}.$patchlevel
-sequence=1
+sequence=2
 description="Library for allowing users to edit command lines"
 tarfile="${name}-${majversion}.${minversion}.tar.gz"
 src=${name}-${baseversion}
@@ -39,5 +39,7 @@ apply_patches() {
 	    -i "$tarballdir/$1/${name}${majversion}${minversion}-$N"
     done
 }
+
+extra_configure_args=--with-curses
 
 install_target=install
