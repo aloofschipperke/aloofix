@@ -5,7 +5,7 @@
 
 name=tcl
 version=8.6.0
-sequence=1
+sequence=2
 description="Tcl scripting language"
 compression_suffix=gz
 src=${name}${version}
@@ -32,4 +32,7 @@ configure() {
 	./configure $configure_args \
 	--without-tzdata \
 	--enable-man-suffix=tcl
+    # 8.6.0 has a problem with regexes in dejagnu
+    sed -i 's/^#define DUPTRAVERSE_MAX_DEPTH 500/#define DUPTRAVERSE_MAX_DEPTH 5000/' \
+	../generic/regc_nfa.c
 }
