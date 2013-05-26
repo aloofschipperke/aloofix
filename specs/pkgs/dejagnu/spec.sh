@@ -5,7 +5,8 @@
 
 name=dejagnu
 version=1.5.1
-sequence=1
+sequence=2
+arch=noarch
 description="A framework for testing programs"
 compression_suffix=gz
 site=http://ftp.gnu.org/gnu/$name
