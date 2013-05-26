@@ -5,7 +5,7 @@
 
 name=ncurses
 version=5.9
-sequence=1
+sequence=2
 site=http://ftp.gnu.org/pub/gnu/$name
 description="NCurses library and support utilities"
 depends=
@@ -29,6 +29,10 @@ configure() {
         --mandir=/usr/share/man \
         --without-cxx \
         --without-ada \
+	--with-ext-colors \
+	--enable-ext-mouse \
+	--enable-pc-files \
+	--with-termlib \
         --with-shared \
         --without-normal \
         --without-debug
