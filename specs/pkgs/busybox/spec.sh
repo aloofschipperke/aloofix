@@ -5,7 +5,7 @@
 
 name=busybox
 version=1.21.0
-sequence=1
+sequence=2
 patchlist="mdev platform xz"
 
 site=http://busybox.net/downloads
