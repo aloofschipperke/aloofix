@@ -6,7 +6,7 @@
 name=vim
 majversion=7
 minversion=3
-patchlevel=935
+patchlevel=1030
 baseversion=${majversion}.$minversion
 version=${baseversion}.$patchlevel
 sequence=1
@@ -21,7 +21,7 @@ section=editors
 compression_suffix=bz2
 
 # patch 780 is busted
-patchlist="$(seq -w 001 $patchlevel | grep -v 780)"
+patchlist="$(seq -w 001 999 | grep -v 780) $(seq -w 1000 1030)"
 
 license="Vim Openpub"
 license_files=runtime/doc/uganda.txt
