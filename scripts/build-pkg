@@ -684,11 +684,11 @@ newsigs() {
 }
 
 unpack() {
-    if [ "$(expr \"$tarfile\" : '.*\(.zip\)$')" ]
+    if [ "$(expr "$tarfile" : '.*\.zip$')" -gt 0 ]
     then
 	unzip -o "$tarballdir/$1/$tarfile" -d "$srctree/$1" || die "unzip failed"
     else
-	tar -x -C "$srctree/$1" -f "$tarballdir/$1/$tarfile" || "tar failed"
+	tar -x -C "$srctree/$1" -f "$tarballdir/$1/$tarfile" || die "tar failed"
     fi
     cd "$src"
     run_hook unpack_hook || return 1
