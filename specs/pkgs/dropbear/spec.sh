@@ -5,7 +5,7 @@
 
 name=dropbear
 version=2013.58
-sequence=1
+sequence=2
 patchlist="crypt-failure"
 
 site=http://matt.ucc.asn.au/$name/releases
