@@ -29,6 +29,10 @@ configure() {
         --mandir=/usr/share/man \
         --without-cxx \
         --without-ada \
+	--with-ext-colors \
+	--enable-ext-mouse \
+	--enable-pc-files \
+	--with-termlib \
         --with-shared \
         --without-normal \
         --without-debug

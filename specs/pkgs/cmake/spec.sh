@@ -7,7 +7,7 @@ name=cmake
 majversion=2.8
 minversion=11
 version=${majversion}.$minversion
-sequence=1
+sequence=2
 site=http://www.cmake.org/files/v$majversion
 description="A cross-platform make system"
 depends="curl-lib expat-lib zlib-lib"
@@ -20,7 +20,7 @@ license_files="Copyright.txt Utilities/*/LICENSE Utilities/*/COPYING"
 extra_doc_files="ChangeLog.txt Readme.txt"
 
 configure() {
-    ./configure --prefix=/usr \
+    LDFLAGS=-ltinfo ./configure --prefix=/usr \
 	--docdir=/share/doc/cmake \
 	--mandir=/share/man \
         --parallel=$make_j_qty \

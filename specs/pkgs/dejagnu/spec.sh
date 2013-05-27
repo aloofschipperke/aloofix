@@ -11,7 +11,7 @@ description="A framework for testing programs"
 compression_suffix=gz
 site=http://ftp.gnu.org/gnu/$name
 depends="expect"
-builddepends=
+builddepends="expect"
 section=devel
 
 license=GPLv3+

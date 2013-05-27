@@ -1,14 +1,27 @@
 ===============================================================================
 Near-term TODOs:
 
-tag release 0.9.0
-
 upgrade automake 1.13.2
 
 subpackages need to explicitly reference version number
     need to rework contents of 'depends' variable - comma-list
 
-fix noarch issues with dejagnu
+work through packages that can use libtinfo
+     only tinfo:
+     	  bash emacs less ncurses texinfo tmux vim
+     both tinfo and ncurses
+     	  cmake cscope dialog gawk gdb gnupg lua pinentry python2 ruby
+extract libtinfo as a subpkg of ncurses
+change depends to use ncurses-tinfo
+       ncurses base (minimal terminfo files)
+       ncurses-lib
+       ncurses-dev
+       ncurses (executables)
+       ncurses-libtinfo
+       ncurses-terms (all the other terminfo files)
+       ncurses-doc
+
+tag release 0.9.0
 
 ===============================================================================
 Packaging TODOs:
@@ -292,7 +305,7 @@ file		-	make check (P)
 findutils	sig	make check (P)
 flex		-	make check (2F) (needs patch for tests against bison)
 gawk		sig	make check (4F) (multibyte, ls bb)
-gcc		sig	make check (prereq: dejagnu) [L]
+gcc		sig	make check (12F 2E) (prereq: dejagnu) [L]
 gdb		sig	make check (+F) (prereq: dejagnu)
 gdbm		sig	make check (P)
 gettext		sig	make check (32F)

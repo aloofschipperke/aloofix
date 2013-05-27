@@ -5,7 +5,7 @@
 
 name=tmux
 version=1.8
-sequence=1
+sequence=2
 description="A terminal multiplexer"
 site=http://downloads.sourceforge.net/$name
 depends="ncurses libevent-lib"
@@ -16,5 +16,7 @@ license=ISC
 license_files=README
 
 extra_doc_files="CHANGES FAQ README TODO examples/*"
+
+extra_configure_args="LIBS=-ltinfo"
 
 base_pkg_excludes=usr/share
