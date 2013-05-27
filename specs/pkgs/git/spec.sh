@@ -4,7 +4,7 @@
 # or (at your option) any later version.
 
 name=git
-version=1.8.2.3
+version=1.8.3
 sequence=1
 site=http://git-core.googlecode.com/files
 description="The stupid content tracker"
