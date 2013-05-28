@@ -1,0 +1,58 @@
+--- doc/wget.texi.broken
++++ doc/wget.texi
+@@ -876,7 +876,7 @@
+ actions of one.
+ 
+ @cindex proxy
+-@itemx --no-proxy
++@item --no-proxy
+ Don't use proxies, even if the appropriate @code{*_proxy} environment
+ variable is defined.
+ 
+@@ -977,7 +977,7 @@
+ whose encoding does not match the one used locally.
+ 
+ @cindex IPv6
+-@itemx -4
++@item -4
+ @itemx --inet4-only
+ @itemx -6
+ @itemx --inet6-only
+@@ -2109,29 +2109,29 @@
+ @item 0
+ No problems occurred.
+ 
+-@item 1
++@item @samp{1}
+ Generic error code.
+ 
+-@item 2
++@item @samp{2}
+ Parse error---for instance, when parsing command-line options, the
+ @samp{.wgetrc} or @samp{.netrc}...
+ 
+-@item 3
++@item @samp{3}
+ File I/O error.
+ 
+-@item 4
++@item @samp{4}
+ Network failure.
+ 
+-@item 5
++@item @samp{5}
+ SSL verification failure.
+ 
+-@item 6
++@item @samp{6}
+ Username/password authentication failure.
+ 
+-@item 7
++@item @samp{7}
+ Protocol errors.
+ 
+-@item 8
++@item @samp{8}
+ Server issued an error response.
+ @end table
+ 
