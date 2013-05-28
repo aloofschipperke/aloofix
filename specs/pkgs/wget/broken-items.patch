@@ -18,8 +18,12 @@
  @itemx --inet4-only
  @itemx -6
  @itemx --inet6-only
-@@ -2109,29 +2109,29 @@
- @item 0
+@@ -2106,32 +2106,32 @@
+ 
+ 
+ @table @asis
+-@item 0
++@item @samp{0}
  No problems occurred.
  
 -@item 1
@@ -56,3 +60,21 @@
  Server issued an error response.
  @end table
  
+@@ -3094,7 +3094,7 @@
+ Change setting of passive @sc{ftp}, equivalent to the
+ @samp{--passive-ftp} option.
+ 
+-@itemx password = @var{string}
++@item password = @var{string}
+ Specify password @var{string} for both @sc{ftp} and @sc{http} file retrieval. 
+ This command can be overridden using the @samp{ftp_password} and 
+ @samp{http_password} command for @sc{ftp} and @sc{http} respectively.
+@@ -3605,7 +3605,7 @@
+ may be specified from within Wget itself.
+ 
+ @table @samp
+-@itemx --no-proxy
++@item --no-proxy
+ @itemx proxy = on/off
+ This option and the corresponding command may be used to suppress the
+ use of proxy, even if the appropriate environment variables are set.
