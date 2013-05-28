@@ -1,0 +1,31 @@
+--- doc/crypto/X509_STORE_CTX_get_error.pod.broken	2013-05-28 15:02:18.983317686 -0600
++++ doc/crypto/X509_STORE_CTX_get_error.pod	2013-05-28 15:02:39.546678177 -0600
+@@ -278,6 +278,8 @@
+ an application specific error. This will never be returned unless explicitly
+ set by an application.
+ 
++=back
++
+ =head1 NOTES
+ 
+ The above functions should be used instead of directly referencing the fields
+--- doc/ssl/SSL_CTX_use_psk_identity_hint.pod.broken	2013-05-28 16:00:36.746689310 -0600
++++ doc/ssl/SSL_CTX_use_psk_identity_hint.pod	2013-05-28 16:01:13.696660070 -0600
+@@ -81,7 +81,9 @@
+ 
+ Return values from the server callback are interpreted as follows:
+ 
+-=item > 0
++=over 4
++
++=item B<E<gt> 0>
+ 
+ PSK identity was found and the server callback has provided the PSK
+ successfully in parameter B<psk>. Return value is the length of
+@@ -99,4 +101,6 @@
+ PSK identity was not found. An "unknown_psk_identity" alert message
+ will be sent and the connection setup fails.
+ 
++=back
++
+ =cut

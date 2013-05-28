@@ -4,7 +4,7 @@
 # or (at your option) any later version.
 
 name=perl
-version=5.16.3
+version=5.18.0
 sequence=1
 site=http://www.cpan.org/src/5.0
 description="Perl - the duct tape of the Internet"
