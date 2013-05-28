@@ -4,7 +4,7 @@
 # or (at your option) any later version.
 
 name=acpid
-version=2.0.18
+version=2.0.19
 sequence=1
 site=http://downloads.sourceforge.net/sourceforge/${name}2
 description="ACPI Daemon"
