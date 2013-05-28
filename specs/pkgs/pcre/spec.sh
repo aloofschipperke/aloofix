@@ -4,7 +4,7 @@
 # or (at your option) any later version.
 
 name=pcre
-version=8.32
+version=8.33
 sequence=1
 description="Perl-compatible regular expression library"
 site=ftp://ftp.csx.cam.ac.uk/pub/software/programming/$name

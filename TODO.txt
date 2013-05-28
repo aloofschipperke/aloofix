@@ -51,10 +51,10 @@ add more packages:
 
     Some other packages on the maybedo list:
 	abi-compliance-checker apache aspell cronie corosync couchdb
-	dejagnu doxygen ed eglibc elfutils grub2 libarchive libvirt
-	logrotate lsof ltrace maildrop mlocate monit nfs nginx
-	nullmailer openvswitch parallel parted php pm-utils perf
-	python3 postgresql radvd redis samba sdl systemtap xorriso zip
+	doxygen ed eglibc elfutils grub2 libarchive libvirt logrotate
+	lsof ltrace maildrop mlocate monit nfs nginx nullmailer
+	openvswitch parallel parted php pm-utils perf python3
+	postgresql radvd redis samba sdl systemtap xorriso
 
     and others...
 
@@ -190,6 +190,7 @@ create a docs/packages.txt
        /etc/sysconfig variables
        cron entries
        caveats
+       maybe embed it in the spec.sh files
 
 improve installer script
     perhaps use dialog in install2hd
@@ -277,10 +278,10 @@ base		n/a	-
 bash		sig	make test (F bb) (locale, printf, catv)
 bc		-	-
 bdb		md5	(prereq: tcl)
-binutils	sig	make check (2E) (prereq: dejagnu)
+binutils	sig	make check (P) (2E) (prereq: dejagnu)
 bison		sig	make check (P)
 bridge-utils	-	-
-busybox		sign	make check (prereq: zip)
+busybox		sign	make check (P) (prereq: zip) export SKIP_KNOWN_BUGS=1
 bzip2		-	make check (P)
 ca-certificates	-	-
 ccache		asc	make check (P)
@@ -288,7 +289,7 @@ cdrtools	-	-
 cmake		-	make test (1F) (probably needs libarchive)
 cscope		-	-
 ctags		-	-
-curl		asc	make check (1F)
+curl		asc	make check (1F) (prereq: perl python stunnel openssh)
 dejagnu		sig	make check (P)
 dialog		asc	-
 diffutils	sig	make check (P)
@@ -353,6 +354,7 @@ nasm		-	(need to review)
 ncurses		sig	-
 neon		asc	(prereq: full gzip)
 nettle		sig	make check (P)
+nmap		asc	cd ncat; make check (P)
 openssl		asc	make test (P)
 opkg		-	-
 patch		sig	make check (2F) ('ed -' and 'cat -v')
@@ -384,5 +386,6 @@ user		n/a	n/a
 vim		-	make test (P)
 wget		sig	make check (P)
 zlib		-	make check (P)
+zip		-	-
 
 ===============================================================================
