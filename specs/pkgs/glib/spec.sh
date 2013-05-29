@@ -5,7 +5,7 @@
 
 name=glib
 majversion=2.37
-minversion=0
+minversion=1
 version=${majversion}.${minversion}
 sequence=1
 site=http://ftp.gnome.org/pub/gnome/sources/$name/$majversion
