@@ -1,27 +1,24 @@
 ===============================================================================
 Near-term TODOs:
 
-upgrade
-	glib 2.37.1
-	automake 1.13.2
-
 subpackages need to explicitly reference version number
     need to rework contents of 'depends' variable - comma-list
 
-work through packages that can use libtinfo
-     only tinfo:
-     	  bash emacs less ncurses texinfo tmux vim
-     both tinfo and ncurses
-     	  cmake cscope dialog gawk gdb gnupg lua pinentry python2 ruby
-extract libtinfo as a subpkg of ncurses
-change depends to use ncurses-tinfo
-       ncurses base (minimal terminfo files)
-       ncurses-lib
-       ncurses-dev
-       ncurses (executables)
-       ncurses-libtinfo
-       ncurses-terms (all the other terminfo files)
-       ncurses-doc
+repackage ncurses
+    work through packages that can use libtinfo
+    	 only tinfo:
+	      bash emacs less ncurses texinfo tmux vim
+	 both tinfo and ncurses
+	      cmake cscope dialog gawk gdb gnupg lua pinentry python2 ruby
+    extract libtinfo as a subpkg of ncurses
+    change depends to use ncurses-tinfo
+    	   ncurses base (minimal terminfo files)
+	   ncurses-lib
+	   ncurses-dev
+	   ncurses (executables)
+	   ncurses-libtinfo
+	   ncurses-terms (all the other terminfo files)
+	   ncurses-doc
 
 tag release 0.9.0
 
@@ -136,9 +133,6 @@ Package TODOs:
 
 add libarchive to cmake builddepends
 
-add command-line args to kexec-load
-    --kernel, --initrd, --list ?
-
 enable apparmor in linux kernel
 remove more stuff from linux kernel
 
@@ -238,7 +232,7 @@ need to create a var for setting default offboard email address for root mail
 
 consider splitting e2fsprogs into separate packages
 
-add cron and init.d scripts for cbq
+maybe add cron and init.d scripts for cbq
 
 need to add logic for default gateway with multiple interfaces
      current use of DEFAULT_INTERFACE is too simplistic for some use cases
@@ -259,10 +253,6 @@ split gettext into two package (per PACKAGING file)
 
 maybe have group removal remove all members first, then remove group
       create a opkg-hook function to remove groups and users
-
-create an ncurses-min package
-       shared libraries and subset of terminfo files
-       linux, xterm, screen, rxvt
 
 ===============================================================================
 		
