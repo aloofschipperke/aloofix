@@ -18,7 +18,7 @@ mail 21 mail 21 /bin/false Email
 dns 23 dns 23 /bin/false DNS
 web 24 web 24 /bin/false Web
 sudo - sudo 200 - -
-distcc 201 distcc 201 /bin/false DistCC
+distcc 200 distcc 200 /bin/false DistCC
 tcpdump 201 tcpdump 201 /bin/false Tcpdump
 build 999 build 999 /bin/sh Build
 "

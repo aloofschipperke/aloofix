@@ -5,7 +5,7 @@
 
 name=linux
 majversion=3.9
-minversion=3
+minversion=4
 # mild gymnastics to handle (e.g.) 3.9 as 3.9.0 without breaking it for 3.9.1
 version=${majversion}.$minversion
 modversion=${majversion}.$minversion

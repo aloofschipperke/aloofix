@@ -5,13 +5,14 @@
 
 name=wget
 version=1.14
-sequence=1
+sequence=2
 site=http://ftp.gnu.org/gnu/$name
 description="Command-line http/ftp client"
 depends="zlib-lib libgpg-error-lib libgcrypt-dev nettle-lib gnutls-lib"
 builddepends="zlib-dev libgpg-error-dev libgcrypt-dev gnutls-dev"
 section=web
 compression_suffix=xz
+patchlist=broken-items
 
 license=GPLv3+
 license_files=COPYING
