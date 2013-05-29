@@ -4,7 +4,7 @@
 # or (at your option) any later version.
 
 name=automake
-version=1.13.1
+version=1.13.2
 sequence=1
 site=http://ftp.gnu.org/gnu/$name
 description="A tool for automatically creating Makefiles"
