@@ -592,6 +592,7 @@ _checksigs() {
 
 _unpack() {
     status "Unpacking $1 files"
+    recreate_dir "$srctree/$1"
     recreate_dir "$src"
     cd "$srctree/$1"
     log unpack "$1"
