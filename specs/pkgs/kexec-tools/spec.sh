@@ -5,7 +5,7 @@
 
 name=kexec-tools
 version=2.0.4
-sequence=1
+sequence=2
 site=ftp://ftp.kernel.org/pub/linux/utils/kernel/kexec
 description="Utility for using the kexec kernel mechanism"
 depends=zlib-lib

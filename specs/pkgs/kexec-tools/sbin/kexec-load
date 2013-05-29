@@ -5,6 +5,10 @@ kexec_enabled=y
 [ -f /etc/sysconfig/kexec ] && . /etc/sysconfig/kexec
 
 die() { echo "$@" >&2; exit 1; }
+usage() {
+    echo "usage: $0 [--kernel=\$kernel] [--initrd=\$initrd]" >&2
+    exit 2
+}
 
 [ -x /sbin/kexec ] || die "kexec executable not found"
 [ "$kexec_enabled" -a ! -e /nokexec ] || die "kexec disabled"
@@ -19,18 +23,41 @@ do
     case "$arg" in
 	/*)
 	    [ "$kernel" ] || kernel="/boot/$arg"
-	    [ -f "$kernel" ] || die "$0: can't find $kernel"
 	    ;;
 	initrd=*)
 	    initrd="/boot/${arg#*=}"
-	    [ -f "$initrd" ] || die "$0: can't find $initrd"
 	    ;;
     esac
 done
 
-[ "$kernel" ] || die "$0: can't find kernel in /proc/cmdline"
+args=$(getopt -l help,kernel:,initrd: '' "$@")
+eval set -- "$args"
+for arg
+do
+    case "$arg" in
+	--kernel)
+	    kernel="$2"
+	    shift 2 ;;
+	--initrd)
+	    initrd="$2"
+	    shift 2 ;;
+	--help)
+	    usage ;;
+	--)
+	    shift
+	    break ;;
+    esac
+done
 
-[ -z "$initrd" ] || initrd="--initrd=$initrd"
+[ "$kernel" ] || die "$0: can't find kernel"
+[ -f "$kernel" ] || die "$0: can't find $kernel"
+
+if [ "$initrd" ]
+then
+    [ -f "$initrd" ] || die "$0: can't find $initrd"
+    initrd="--initrd=$initrd"
+fi
+
 /sbin/kexec -l "$kernel" $initrd --reuse-cmdline
 
 exit 0
