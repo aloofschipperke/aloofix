@@ -1,7 +1,9 @@
 ===============================================================================
 Near-term TODOs:
 
-upgrade automake 1.13.2
+upgrade
+	glib 2.37.1
+	automake 1.13.2
 
 subpackages need to explicitly reference version number
     need to rework contents of 'depends' variable - comma-list
