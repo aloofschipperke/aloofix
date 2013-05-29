@@ -4,7 +4,7 @@
 # or (at your option) any later version.
 
 name=nettle
-version=2.7
+version=2.7.1
 sequence=1
 site=http://ftp.gnu.org/gnu/$name
 description="A cryptographic library"
