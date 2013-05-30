@@ -6,7 +6,7 @@
 name=vim
 majversion=7
 minversion=3
-patchlevel=1032
+patchlevel=1075
 baseversion=${majversion}.$minversion
 version=${baseversion}.$patchlevel
 sequence=1
