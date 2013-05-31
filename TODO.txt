@@ -4,6 +4,10 @@ Near-term TODOs:
 subpackages need to explicitly reference version number
     need to rework contents of 'depends' variable - comma-list
 
+need init.d script for nginx
+     need 'daemon off' in nginx.conf
+need log rotation for nginx, since it doesn't use syslog
+
 repackage ncurses
     work through packages that can use libtinfo
     	 only tinfo:
@@ -12,11 +16,11 @@ repackage ncurses
 	      cmake cscope dialog gawk gdb gnupg lua pinentry python2 ruby
     extract libtinfo as a subpkg of ncurses
     change depends to use ncurses-tinfo
-    	   ncurses base (minimal terminfo files)
 	   ncurses-lib
 	   ncurses-dev
 	   ncurses (executables)
 	   ncurses-libtinfo
+    	   ncurses-minterms (minimal terminfo files)
 	   ncurses-terms (all the other terminfo files)
 	   ncurses-doc
 
@@ -49,11 +53,12 @@ add more packages:
 	xcb-proto xcmiscproto xextproto xproto xtrans
 
     Some other packages on the maybedo list:
+
 	abi-compliance-checker apache aspell cronie corosync couchdb
 	doxygen ed eglibc elfutils grub2 libarchive libvirt logrotate
-	lsof ltrace maildrop mlocate monit nfs nginx nullmailer
-	openvswitch parallel parted php pm-utils perf python3
-	postgresql radvd redis samba sdl systemtap xorriso
+	lsof ltrace maildrop mlocate monit msmtp nfs nullmailer
+	openvswitch parted php pm-utils perf python3 postgresql
+	procps-ng radvd redis samba sdl systemtap xorriso
 
     and others...
 
@@ -71,10 +76,9 @@ add check phase in build-pkg
 invalid subpkg name should cause magic-install and build-pkg to fail
 
 separate package creation from scripts/build-pkg
+combine some of the code in scripts/mkimage and scripts/build-pkg
 
 add ability to have download mirrors
-
-combine some of the code in scripts/mkimage and scripts/build-pkg
 
 think about doing a real install of build tools when on an aloofix instance
       scripts in /usr/bin
@@ -95,6 +99,8 @@ write a wizard for creating a spec.sh incrementally
       populate extra_doc_files
       extra flags from configure to prepopulate extra_configure_args
       check for make check or make test
+      preflight check for /usr/man, shared objects not in *-lib
+      		etc files not registered as conffiles
 
 improve support for initial build on other distros
     debian pkgs: build-essential uuid-dev gawk zlib1g-dev libmpc-dev xorriso
@@ -349,6 +355,7 @@ nettle		sig	make check (P)
 nmap		asc	cd ncat; make check (P)
 openssl		asc	make test (P)
 opkg		-	-
+parallel	sig	-
 patch		sig	make check (2F) ('ed -' and 'cat -v')
 pciutils	sign	-
 pcre		sig	make check (P)
