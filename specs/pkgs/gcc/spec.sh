@@ -4,7 +4,7 @@
 # or (at your option) any later version.
 
 name=gcc
-version=4.8.0
+version=4.8.1
 sequence=1
 site=http://ftp.gnu.org/gnu/$name/${name}-$version
 description="GNU C Compiler"
