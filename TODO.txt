@@ -4,10 +4,6 @@ Near-term TODOs:
 subpackages need to explicitly reference version number
     need to rework contents of 'depends' variable - comma-list
 
-need init.d script for nginx
-     need 'daemon off' in nginx.conf
-need log rotation for nginx, since it doesn't use syslog
-
 repackage ncurses
     work through packages that can use libtinfo
     	 only tinfo:
@@ -21,6 +17,7 @@ repackage ncurses
 	   ncurses (executables)
 	   ncurses-libtinfo
     	   ncurses-minterms (minimal terminfo files)
+	   		    linux, xterm, screen
 	   ncurses-terms (all the other terminfo files)
 	   ncurses-doc
 
@@ -77,6 +74,7 @@ invalid subpkg name should cause magic-install and build-pkg to fail
 
 separate package creation from scripts/build-pkg
 combine some of the code in scripts/mkimage and scripts/build-pkg
+maybe separate package creation from build-pkg (and mkimage)
 
 add ability to have download mirrors
 
@@ -137,6 +135,8 @@ ec2:
 ===============================================================================
 Package TODOs:
 
+need log rotation for nginx, since it doesn't use syslog
+
 add libarchive to cmake builddepends
 
 enable apparmor in linux kernel
@@ -195,7 +195,7 @@ create a docs/packages.txt
        maybe embed it in the spec.sh files
 
 improve installer script
-    perhaps use dialog in install2hd
+    maybe use dialog in install2hd
 
     maybe add mini boot scripts for lvm and mdadm
 
@@ -242,10 +242,10 @@ maybe add cron and init.d scripts for cbq
 
 need to add logic for default gateway with multiple interfaces
      current use of DEFAULT_INTERFACE is too simplistic for some use cases
-     perhaps add route metric mechanism to udhcpc action script
+     maybe add route metric mechanism to udhcpc action script
      	     list of interfaces we'll accept for a default gateway entry
 	     metric offset for each interface (defaults to 1)
-     perhaps implement as a handler script
+     maybe implement as a handler script
 implement handler script for selecting which interface owns resolv.conf
      current default uses DEFAULT_INTERFACE
      $interface, $domain, $dns
