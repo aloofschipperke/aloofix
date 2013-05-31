@@ -5,7 +5,7 @@
 
 name=nginx
 version=1.4.1
-sequence=1
+sequence=2
 description="HTTP and reverse proxy server"
 compression_suffix=gz
 site=http://nginx.org/download/
@@ -74,4 +74,6 @@ pkg_base_hook() {
     register_conffile /srv/www/50x.html
     sed -i -e 's@root \+html;@root /srv/www;@' \
 	"$pkgcontentdir/etc/nginx/nginx.conf"
+    sed -i -e '1i\daemon off;' "$pkgcontentdir/etc/nginx/nginx.conf"
+    copy_from_spec etc/sv
 }
