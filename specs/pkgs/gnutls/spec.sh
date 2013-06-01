@@ -5,7 +5,7 @@
 
 name=gnutls
 majversion=3.2
-minversion=0
+minversion=1
 version=${majversion}.$minversion
 sequence=1
 site=ftp://ftp.gnutls.org/gcrypt/$name/v$majversion
