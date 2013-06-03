@@ -14,7 +14,7 @@ then
     version=$majversion
     modversion=${majversion}.$minversion
 fi
-sequence=1
+sequence=2
 site=ftp://ftp.kernel.org/pub/$name/kernel/v3.x
 description="Linux kernel"
 builddepends="bash perl bc"

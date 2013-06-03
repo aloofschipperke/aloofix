@@ -2,11 +2,11 @@
 
 /bin/busybox --install -s
 
-bootscripts="minmount mdev devpts hwclock remount-root hostname modules sysctl find-cdrom mountall"
+boot_scripts="minmount mdev devpts hwclock remount-root hostname modules sysctl find-cdrom mountall"
 
-for bootscript in $bootscripts
+for boot_script in $boot_scripts
 do
-    [ -x /etc/init.d/$bootscript ] && /etc/init.d/$bootscript start
+    [ -x /etc/init.d/$boot_script ] && /etc/init.d/$boot_script start
 done
 
 /bin/dmesg >/var/log/boot.log
