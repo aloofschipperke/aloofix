@@ -32,7 +32,7 @@ The major steps are as follows:
 * Boot the initial ISO image and build a 2nd ISO image
 * Boot the 2nd image and build the packages for a build/package server
 
-This process takes approximately 2-2.5 hours using 4-vCPU VMs.
+This process takes approximately 1.5-2.5 hours using 4-vCPU VMs.
 
 For the instructions in this document, the assumption is that the user
 will be using VMs for both the Archlinux system and for the Aloofix
