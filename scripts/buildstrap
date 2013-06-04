@@ -25,6 +25,8 @@ set -u
 
 pkglist="syslinux linux glibc tzdata busybox opkg e2fsprogs zlib dropbear make patch binutils gcc tar fakeroot aloofix-src"
 
+die() { echo "$*" >&2; exit 1; }
+
 user=$(id -un)
 [ "$user" != root ] || die "do not run $0 as root"
 
