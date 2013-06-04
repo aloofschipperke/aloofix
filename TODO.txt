@@ -50,7 +50,6 @@ add more packages:
 	xcb-proto xcmiscproto xextproto xproto xtrans
 
     Some other packages on the maybedo list:
-
 	abi-compliance-checker apache aspell cronie corosync couchdb
 	doxygen ed eglibc elfutils grub2 libarchive libvirt logrotate
 	lsof ltrace maildrop mlocate monit msmtp nfs nullmailer
@@ -121,12 +120,28 @@ maybe enable syslogd on installer cd
 convert bootscripts= var in rcS into a file containing boot scripts
 	perhaps /etc/sysconfig/bootscripts
 	maybe do away with S* and K* mechanism and just use bootscript files
-	initrd/etc/init.d/rcS
-	busybox/etc/init.d/rcS
-	lxc/usr/bin/lxc-aloofix
-	lxc/usr/lib/lxc/templates/lxc-aloofix
+	iso_initrd/etc/init.d/rcS 	  		bootscripts
+	busybox/etc/init.d/rcS	  	  		boot_scripts
+		 mdev
+		 devpts
+		 hwclock
+		-console
+		-swap
+		-fsck
+		 remount-root
+		 hostname
+		 modules
+		 sysctl
+		 find-cdrom
+		 mountall
+		-cleanfiles
+		-random
+		-network
+	install2hd/usr/share/install2hd/localize	boot_scripts
 
 ec2:
+	enable pae/xen/etc kernel config items
+	work through pv-grub stuff
 	install base tz glibc busybox opkg zlib dropbear e2fsprogs
 		(openssl webuser lighttpd)
 	setup firstboot, hostname, startup daemons, fstab
@@ -191,7 +206,7 @@ create a docs/packages.txt
        sv and init.d scripts
        /etc/sysconfig variables
        cron entries
-       caveats
+       caveats/conflicts
        maybe embed it in the spec.sh files
 
 improve installer script
