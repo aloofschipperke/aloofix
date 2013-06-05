@@ -19,6 +19,7 @@
 ###############################################################################
 
 die() { echo "$*" >&2; exit 1; }
+status() { echo "$*"; }
 
 set -e
 set -u
@@ -48,7 +49,7 @@ root_mnt="$TMPIR/.tmproot-$$"
 [ -d "$rootfs" ] || die "$rootfs isn't a directory"
 ###############################################################################
 
-echo "creating a mounted loopback filesystem image"
+status "creating a mounted loopback filesystem image"
 
 dd if=/dev/zero of=$image_name bs=$image_bs count=$image_blocks
 loopback_dev=`losetup -f`
@@ -67,13 +68,13 @@ trap "umount $root_mnt; rmdir $root_mnt; losetup -d $loopback_dev; exit 1" EXIT
 
 ###############################################################################
 
-echo "copying filesystem tree to loopback image"
+status "copying filesystem tree to loopback image"
 
 tar -c -C "$rootfs" -f - . | tar -x -C "$root_mnt" -f -
 
 ###############################################################################
 
-echo "closing up shop"
+status "closing up shop"
 
 umount $root_mnt
 trap "rmdir $root_mnt; losetup -d $loopback_dev; exit 1" EXIT
