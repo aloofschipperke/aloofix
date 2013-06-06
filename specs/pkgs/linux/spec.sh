@@ -14,12 +14,13 @@ then
     version=$majversion
     modversion=${majversion}.$minversion
 fi
-sequence=3
+sequence=4
 site=ftp://ftp.kernel.org/pub/$name/kernel/v3.x
 description="Linux kernel"
 builddepends="bash perl bc"
 section=kernel
 compression_suffix=xz
+patchlist=check-pkgconfig
 
 strip_kernel_modules=1
 
