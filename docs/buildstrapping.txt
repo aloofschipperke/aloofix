@@ -290,7 +290,8 @@ items in the list.
 
 This handles the first two items in the list above. If you want to
 build all servers, add `--buildall` to the preceding
-`make-buildserver` command line.
+`make-buildserver` command line. This will take approximately 1.75
+hours on the hardware mentioned earlier in this document.
 
 The next steps is to enable the web server:
 

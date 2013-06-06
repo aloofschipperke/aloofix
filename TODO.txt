@@ -5,21 +5,19 @@ subpackages need to explicitly reference version number
     need to rework contents of 'depends' variable - comma-list
 
 repackage ncurses
-    work through packages that can use libtinfo
+	ncurses-lib
+	ncurses-dev
+	ncurses (executables)
+	ncurses-libtinfo
+	ncurses-minterms (minimal terminfo files)
+			 linux, xterm, screen
+	ncurses-terms (all the other terminfo files)
+	ncurses-doc
+    change depends to use ncurses-tinfo
     	 only tinfo:
 	      bash emacs less ncurses texinfo tmux vim
 	 both tinfo and ncurses
 	      cmake cscope dialog gawk gdb gnupg lua pinentry python2 ruby
-    extract libtinfo as a subpkg of ncurses
-    change depends to use ncurses-tinfo
-	   ncurses-lib
-	   ncurses-dev
-	   ncurses (executables)
-	   ncurses-libtinfo
-    	   ncurses-minterms (minimal terminfo files)
-	   		    linux, xterm, screen
-	   ncurses-terms (all the other terminfo files)
-	   ncurses-doc
 
 tag release 0.9.0
 
@@ -51,10 +49,10 @@ add more packages:
 
     Some other packages on the maybedo list:
 	abi-compliance-checker apache aspell cronie corosync couchdb
-	doxygen ed eglibc elfutils grub2 libarchive libvirt logrotate
-	lsof ltrace maildrop mlocate monit msmtp nfs nullmailer
-	openvswitch parted php pm-utils perf python3 postgresql
-	procps-ng radvd redis samba sdl systemtap xorriso
+	doxygen ed eglibc elfutils grub2 haproxy libarchive libvirt
+	logrotate lsof ltrace maildrop mlocate monit msmtp nfs
+	nullmailer openvswitch parted php pm-utils perf python3
+	postgresql procps-ng radvd redis samba sdl systemtap xorriso
 
     and others...
 
@@ -84,7 +82,7 @@ think about doing a real install of build tools when on an aloofix instance
       /srv/aloofix/{build,images,pkgs}
       where to put config file?
       update docs to reflect changes
-      following scripts should not be in /usr/bin:
+      following scripts should probably not be in /usr/bin:
           make-buildserver
 	  buildstrap
 	  extract-kernel-settings
@@ -117,11 +115,11 @@ Image TODOs:
 
 maybe enable syslogd on installer cd
 
-convert bootscripts= var in rcS into a file containing boot scripts
-	perhaps /etc/sysconfig/bootscripts
-	maybe do away with S* and K* mechanism and just use bootscript files
-	iso_initrd/etc/init.d/rcS 	  		bootscripts
-	busybox/etc/init.d/rcS	  	  		boot_scripts
+maybe convert boot_scripts= var in rcS into a file containing boot scripts
+      perhaps /etc/sysconfig/bootscripts
+      maybe do away with S* and K* mechanism and just use bootscript files
+      iso_initrd/etc/init.d/rcS
+      busybox/etc/init.d/rcS
 		 mdev
 		 devpts
 		 hwclock
@@ -137,15 +135,28 @@ convert bootscripts= var in rcS into a file containing boot scripts
 		-cleanfiles
 		-random
 		-network
-	install2hd/usr/share/install2hd/localize	boot_scripts
+      install2hd/usr/share/install2hd/localize
 
 ec2:
 	enable pae/xen/etc kernel config items
 	work through pv-grub stuff
+	modify mkimage to create disk images
+	convert ec2 image script from ext2 to ext3 or ext4
 	install base tz glibc busybox opkg zlib dropbear e2fsprogs
 		(openssl webuser lighttpd)
 	setup firstboot, hostname, startup daemons, fstab
 	set web index.html, initialize root ssh
+
+ec2-ami-tools
+    s3.amazonaws.com/ec2-downloads/ec2-ami-tools-1.4.0.9.zip{,.asc}
+				   mappings.csv{,.asc} ?
+    prereqs: curl, gzip, openssl, rsync, ruby
+    sed -i -e '1s@^#!/bin/bash@#!/bin/ash@' bin/*
+    EC2_HOME=/
+    EC2_AMITOOL_HOME=/usr
+    bin -> /usr/bin
+    etc -> /etc
+    lib -> /usr/lib
 
 ===============================================================================
 Package TODOs:

@@ -4,7 +4,7 @@
 # or (at your option) any later version.
 
 name=strace
-version=4.7
+version=4.8
 sequence=1
 site=http://downloads.sourceforge.net/$name
 description="System Call Trace utility"

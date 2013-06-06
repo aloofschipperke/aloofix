@@ -3,7 +3,7 @@
 # Distributed under the terms of the GNU General Public License version 3,
 # or (at your option) any later version.
 
-include aloofix-min
+include aloofix-iso-min
 
 appid="Aloofix Installation CD"
 
