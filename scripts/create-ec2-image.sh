@@ -27,13 +27,13 @@ PATH=/sbin:$PATH
 
 case $# in
     4)
-	rootfs="$1"
+	tarball="$1"
 	image_name="$2"
 	image_blocks="$3"
 	image_bs="$4"
 	;;
     *)
-	die "Usage: $0 \$rootfs \$imagename \$qtyblocks \$blocksize"
+	die "Usage: $0 \$tarball \$imagename \$qtyblocks \$blocksize"
 	;;
 esac
 
@@ -42,11 +42,11 @@ mkfs_opts="-j"
 tune2fs_opts=
 
 TMPDIR=/var/tmp
-root_mnt="$TMPIR/.tmproot-$$"
+root_mnt="$TMPDIR/.tmproot-$$"
 
 ###############################################################################
-[ -e "$rootfs" ] || die "$rootfs doesn't exist"
-[ -d "$rootfs" ] || die "$rootfs isn't a directory"
+[ -e "$tarball" ] || die "$tarball doesn't exist"
+[ -f "$tarball" ] || die "$tarball isn't a file"
 ###############################################################################
 
 status "creating a mounted loopback filesystem image"
@@ -70,7 +70,7 @@ trap "umount $root_mnt; rmdir $root_mnt; losetup -d $loopback_dev; exit 1" EXIT
 
 status "copying filesystem tree to loopback image"
 
-tar -c -C "$rootfs" -f - . | tar -x -C "$root_mnt" -f -
+tar -x -C "$root_mnt" -f $tarball
 
 ###############################################################################
 
