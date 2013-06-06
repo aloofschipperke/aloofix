@@ -38,10 +38,10 @@ add 'make [eg]?tags', 'make cscope'
 add more packages:
 
     Packages from previous incarnation:
-	chrony cvs drbd ec2-ami-tools ec2-api-tools ejabberd elinks
-	erlang fcgi gpm grub icu4c ipvsadm keepalived libxslt lighttpd
-	links lxc mercurial (mysql) openjdk qemu screen shorewall
-	shorewall-lite spidermonkey
+	chrony cvs drbd ec2-api-tools ejabberd elinks erlang fcgi gpm
+	grub icu4c ipvsadm keepalived libxslt lighttpd links lxc
+	mercurial (mysql) openjdk qemu screen shorewall shorewall-lite
+	spidermonkey
     Minimal X11 support:
 	bigreqsproto inputproto kbproto libx11 libxau libxcb libxdmcp
 	libxext libxi libxrender libxtst recordproto renderproto
@@ -146,17 +146,15 @@ ec2:
 		(openssl webuser lighttpd)
 	setup firstboot, hostname, startup daemons, fstab
 	set web index.html, initialize root ssh
-
-ec2-ami-tools
-    s3.amazonaws.com/ec2-downloads/ec2-ami-tools-1.4.0.9.zip{,.asc}
-				   mappings.csv{,.asc} ?
-    prereqs: curl, gzip, openssl, rsync, ruby
-    sed -i -e '1s@^#!/bin/bash@#!/bin/ash@' bin/*
-    EC2_HOME=/
-    EC2_AMITOOL_HOME=/usr
-    bin -> /usr/bin
-    etc -> /etc
-    lib -> /usr/lib
+	mkimage recipe
+		fstab
+		hostname
+		root password
+		sv symlinks
+		swap partition/file
+		need to add dropbear and zlib-lib
+		authorized_keys
+		opkg server
 
 ===============================================================================
 Package TODOs:
@@ -322,6 +320,7 @@ dmidecode	sig	-
 dnsmasq		-	-
 dropbear	sha.asc	-
 e2fsprogs	sign	(prereq) (bb ps issues)
+ec2-ami-tools	asc	-
 emacs		sig	-
 expat		-	make check (P)
 expect		-	make test (P)
