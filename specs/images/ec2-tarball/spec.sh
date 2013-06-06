@@ -12,6 +12,7 @@ directories="
 devices="console null zero"
 
 packages="base-license base
+	linux-license linux
 	glibc-license glibc-min
 	tzdata-license tzdata-min
 	busybox-license busybox
