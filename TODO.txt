@@ -141,10 +141,22 @@ ec2:
 	enable pae/xen/etc kernel config items
 	work through pv-grub stuff
 	modify mkimage to create disk images
+	convert ec2 image script from ext2 to ext3 or ext4
 	install base tz glibc busybox opkg zlib dropbear e2fsprogs
 		(openssl webuser lighttpd)
 	setup firstboot, hostname, startup daemons, fstab
 	set web index.html, initialize root ssh
+
+ec2-ami-tools
+    s3.amazonaws.com/ec2-downloads/ec2-ami-tools-1.4.0.9.zip{,.asc}
+				   mappings.csv{,.asc} ?
+    prereqs: curl, gzip, openssl, rsync, ruby
+    sed -i -e '1s@^#!/bin/bash@#!/bin/ash@' bin/*
+    EC2_HOME=/
+    EC2_AMITOOL_HOME=/usr
+    bin -> /usr/bin
+    etc -> /etc
+    lib -> /usr/lib
 
 ===============================================================================
 Package TODOs:
