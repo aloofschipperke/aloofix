@@ -64,7 +64,7 @@ tune2fs $tune2fs_opts -L $fs_label $image_name
 mkdir $root_mnt
 trap "rmdir $root_mnt; losetup -d $loopback_dev; exit 1" EXIT
 mount $loopback_dev $root_mnt
-trap "umount $root_mnt; rmdir $root_mnt; losetup -d $loopback_dev; exit 1" EXIT
+trap "umount $root_mnt; rmdir $root_mnt; exit 1" EXIT
 
 ###############################################################################
 
@@ -77,10 +77,8 @@ tar -x -C "$root_mnt" -f $tarball
 status "closing up shop"
 
 umount $root_mnt
-trap "rmdir $root_mnt; losetup -d $loopback_dev; exit 1" EXIT
+trap "rmdir $root_mnt; exit 1" EXIT
 rmdir $root_mnt
-trap "losetup -d $loopback_dev; exit 1" EXIT
-losetup -d $loopback_dev
 trap - EXIT
 
 exit 0
