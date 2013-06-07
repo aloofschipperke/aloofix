@@ -1,0 +1,6 @@
+default 0
+timeout 3
+
+title Linux
+	root (hd0)
+	kernel /boot/vmlinuz root=/dev/sda1
