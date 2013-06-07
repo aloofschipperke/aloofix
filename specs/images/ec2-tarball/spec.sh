@@ -24,6 +24,7 @@ packages="base-license base
 
 localize() {
     copy_spec_files etc
+    copy_spec_files boot
     touch firstboot
     [ -f etc/init.d/firstboot.rootpw ] \
 	|| mv etc/init.d/no.firstboot.rootpw etc/init.d/firstboot.rootpw
