@@ -4,7 +4,7 @@
 # or (at your option) any later version.
 
 name=unifdef
-version=2.8
+version=2.9
 sequence=1
 site=http://dotat.at/prog/$name
 description="Remove #ifdef lines from a file"

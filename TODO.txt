@@ -407,7 +407,7 @@ tcpdump		sig	make check (1F)
 texinfo		sig	make check (P)
 tmux		-	-
 tzdata		asc	-
-unifdef		-	make test (P)
+unifdef		-	make test (P) (prereq: diffutils)
 user		n/a	n/a
 vim		-	make test (P)
 wget		sig	make check (P)
