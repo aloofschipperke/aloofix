@@ -1,6 +1,8 @@
 ===============================================================================
 Near-term TODOs:
 
+upgrade unidef to 2.9
+
 subpackages need to explicitly reference version number
     need to rework contents of 'depends' variable - comma-list
 
