@@ -1,8 +1,6 @@
 ===============================================================================
 Near-term TODOs:
 
-upgrade unidef to 2.9
-
 subpackages need to explicitly reference version number
     need to rework contents of 'depends' variable - comma-list
 
@@ -407,7 +405,7 @@ tcpdump		sig	make check (1F)
 texinfo		sig	make check (P)
 tmux		-	-
 tzdata		asc	-
-unifdef		-	make test (P)
+unifdef		-	make test (P) (prereq: diffutils)
 user		n/a	n/a
 vim		-	make test (P)
 wget		sig	make check (P)
