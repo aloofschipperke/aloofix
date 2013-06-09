@@ -1,0 +1,11 @@
+--- Makefile.in.broken	2013-06-09 14:47:29.712730936 -0600
++++ Makefile.in	2013-06-09 14:47:51.003076906 -0600
+@@ -202,7 +202,7 @@
+ libsyscom.a: common.o ioconf.o
+ 	$(AR) rvs $@ $?
+ 
+-librdstats.a: librdstats.a(rd_stats.o count.o)
++librdstats.a: librdstats.a(rd_stats.o) librdstats.a(count.o)
+ 
+ librdsensors.a: librdsensors.a(rd_sensors.o)
+ 
