@@ -4,7 +4,7 @@
 # or (at your option) any later version.
 
 name=syslinux
-version=5.01
+version=5.10
 sequence=1
 site=ftp://ftp.kernel.org/pub/linux/utils/boot/$name
 description="Boot loader"
