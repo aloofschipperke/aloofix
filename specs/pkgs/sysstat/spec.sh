@@ -4,7 +4,7 @@
 # or (at your option) any later version.
 
 name=sysstat
-version=10.1.5
+version=10.1.6
 sequence=1
 site=http://pagesperso-orange.fr/sebastien.godard
 description="System Activity Reporting tools"
@@ -12,6 +12,7 @@ depends=
 section=admin
 # xz version is failing extract for some reason
 compression_suffix=bz2
+patchlist=archive-member
 
 license=GPLv2+
 license_files=COPYING
