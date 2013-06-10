@@ -1,6 +1,9 @@
 ===============================================================================
 Near-term TODOs:
 
+bump gzip to 1.6
+     make check fails
+
 subpackages need to explicitly reference version number
     need to rework contents of 'depends' variable - comma-list
 
@@ -155,6 +158,19 @@ ec2:
 		need to add dropbear and zlib-lib
 		authorized_keys
 		opkg server
+
+gce:
+	https://developers.google.com/compute/docs/building_image
+	tar needs --format=oldgnu and -S
+	    one file: disk.raw
+	disk.raw <= 10GB
+		 1 primary ext4 partition with msdos partition table
+		 kernels, bootloaders, modules will be ignored
+	dhcp needs mtu option set to <= 1460
+	ntp server is 169.254.169.254
+	need packages for gsutil and gcutil
+	ssh key
+	etc etc
 
 ===============================================================================
 Package TODOs:
